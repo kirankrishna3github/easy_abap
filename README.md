@@ -6,7 +6,7 @@ This project collects utility and helper functions for everyday use in abap.
 
 ### Requirements
 
-- you need SAP NetWeaver 7.50 SP12.
+You need SAP NetWeaver 7.50 SP12.
 
 ### Download and Installation
 
