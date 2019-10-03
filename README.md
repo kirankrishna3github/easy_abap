@@ -6,6 +6,8 @@ Requirement: ABAP Version 702 or higher
 
 Latest build (v.06): zcl_easy_abap.abap (link)
 
+Following [Horst Keller's blog on _Internal Tables with Empty Key_](https://blogs.sap.com/2013/06/27/abap-news-for-release-740-internal-tables-with-empty-key/)
+
 ## Design Goals
 
 * Easy installation: works on every abap system, just copy one class and change two lines of code with the name of the class
