@@ -32,7 +32,7 @@ report zre_easy_abap_example.
 "create an instance of your new helper class
 lo_help = new zcl_easy_abap( ).
 
-"start working with it
+"and start working with it
 "...
 
 "for instance: read a t100 message
@@ -46,7 +46,7 @@ lo_help->db_save(
           i_any  = ls_msg    "Message content
           ).
 
-"and so on (watch out other examples)
+"and so on... (watch out other examples)
 ```
 
 ## Versions
