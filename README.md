@@ -23,13 +23,20 @@ Latest build: zcl_easy_abap.abap (link)
 
 ```ABAP
 report zre_easy_abap_example.
+
 "create an instance of your new helper class
 lo_help = new zcl_easy_abap( ).
 
 "start working, for instance: read a t100 message
-lo_help->msg( exporting i_any = '123(bus123id)' importing es_bapi = data(ls_bapi) ).
+lo_help->msg( exporting i_any = '123(bus123id)' importing es_bapi = data(ls_msg) ).
 
-
+"save message persitent
+lo_help->db_save( 
+          bus    = 'X'       "business application log
+          i_key  = 'ZLOG_01' "bal class
+          i_key2 = 'ZMSG'    "bal subclass
+          i_any  = ls_msg    "Message content
+          ).
 ```
 
 ## FAQ
