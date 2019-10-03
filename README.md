@@ -18,7 +18,15 @@ Latest build: zcl_easy_abap.abap (link)
 
 ## Example
 
-Ein Beispiel
+```ABAP
+DATA itab2 TYPE STANDARD TABLE OF row_type WITH NON-UNIQUE KEY comp1 comp2.
+```
+
+or resort to `EMPTY KEY` if you don't need a key at all.
+
+```ABAP
+DATA itab1 TYPE STANDARD TABLE OF row_type WITH EMPTY KEY.
+```
 
 more Example
    * Message Handling (here)
