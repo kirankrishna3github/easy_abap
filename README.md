@@ -4,9 +4,7 @@ Library that simplifies programming with abap. This project collects utility and
 
 Requirement: ABAP Version 702 or higher
 
-Latest build (v.06): zcl_easy_abap.abap (link)
-
-Following [Horst Keller's blog on _Internal Tables with Empty Key_](https://blogs.sap.com/2013/06/27/abap-news-for-release-740-internal-tables-with-empty-key/)
+Latest build (v.06): [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tree/master/zcl_easy_abap)
 
 ## Design Goals
 
