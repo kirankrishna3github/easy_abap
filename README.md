@@ -29,7 +29,7 @@ Latest build (v.06): zcl_easy_abap.abap (link)
 ```ABAP
 "wherever you want to use the functions of easy abap
 
-"create an instance of your new class
+"create an instance of the new class
 lo_easy = new zcl_easy_abap( ).
 
 "and just start working with it
