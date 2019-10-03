@@ -19,16 +19,14 @@ Latest build: zcl_easy_abap.abap (link)
 ## Example
 
 ```ABAP
-DATA itab2 TYPE STANDARD TABLE OF row_type WITH NON-UNIQUE KEY comp1 comp2.
+sCreate an instance of your helper class
+lo_help = new zcl_easy_abap( ).
+
+"start working: for instance read a t100 message
+lo_help->msg( exporting i_any = '123(bus123id) importing es_bapi = data(ls_bapi) ).
+*ls_bapi your message with all information
 ```
-
-or resort to `EMPTY KEY` if you don't need a key at all.
-
-```ABAP
-DATA itab1 TYPE STANDARD TABLE OF row_type WITH EMPTY KEY.
-```
-
-more Example
+More examples
    * Message Handling (here)
    * Exceptions (here)
    * BAL, GOS, (here)
