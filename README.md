@@ -4,7 +4,7 @@ Library that simplifies programming with abap. This project collects utility and
 
 Requirement: ABAP Version 702 or higher
 
-Latest build: zcl_easy_abap.abap (link)
+Latest build (v.06): zcl_easy_abap.abap (link)
 
 ## Design Goals
 
@@ -49,7 +49,7 @@ lo_help->db_save(
 "and so on (watch out other examples)
 ```
 
-## FAQ
+## Versions
 
 ...
 
