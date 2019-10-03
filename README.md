@@ -30,7 +30,7 @@ Latest build (v.06): [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tr
 "wherever you want to use the functions of easy abap
 
 "create an instance of the new class
-lo_easy = new zcl_easy_abap( ).
+data(lo_easy) = new zcl_easy_abap( ).
 
 "and just start working with it
 "...
