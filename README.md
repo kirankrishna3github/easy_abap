@@ -33,10 +33,7 @@ Latest build (v.06): [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tr
 "create an instance of the new class
 data(lo_easy) = new zcl_easy_abap( ).
 
-"and just start working with it
-"...
-
-"for instance: read a t100 message
+"and for instance: read a t100 message
 data(ls_msg) = lo_easy->get_msg('123(bus123id)').
 
 "save message persistent
@@ -47,7 +44,7 @@ lo_easy->db_save(
            i_any  = ls_msg    "message content
          ).
 
-"and so on... (watch out other examples)
+"and so on...
 ```
 
 ## Versions
