@@ -20,9 +20,10 @@ Latest build (v.06): [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tr
 * Copy [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/master/zcl_easy_abap/zcl_easy_abap_local_types.abap) into the local class section of your new class
    * Rename line 6 with the name of your new class
 * Start working and watch out the examples
-   * Message Handling (here)
-   * Exceptions (here)
-   * BAL, GOS, (here)
+   * [Message Handling](link)
+   * [Exceptions](link)
+   * [BAL, GOS, ...](link)
+   * [others](link)
 
 ## An example for the beginning
 
