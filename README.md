@@ -41,7 +41,7 @@ lo_help->db_save(
           i_any  = ls_msg    "Message content
           ).
 
-"and so on (watch out other example)
+"and so on (watch out other examples)
 ```
 
 ## FAQ
