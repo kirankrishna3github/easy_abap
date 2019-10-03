@@ -4,26 +4,29 @@ This project collects utility and helper functions for everyday use in abap.
 
 Requirement: ABAP Version 702 or higher
 
-Latest build: zabapgit.abap (link)
+Latest build: zcl_easy_abap.abap (link)
 
 
 ## Installation
 
-* create a new class in your system
-* copy the file 'ABCD' into the global class 
+* Create a new global class in your abap system
+* Copy the file (LINK) into the global class section of your new class
     * Rename line 5 with the name of your new class
-* copy the file 'ABCD' into the local class section
+* Copy the file (LINK) into the local class section of your new class
     * Rename line 6 with the name of your new class
-* optional: copy the unit tests into the unit test section
+* Start working and watch out the examples (link)
 
 ## Example
 
 Ein Beispiel
 
-more Example (here)
+more Example
+   * Message Handling (here)
+   * Exceptions (here)
+   * BAL, GOS, (here)
 
-## Known Issues
+## FAQ
 
-None.
+...
 
 
