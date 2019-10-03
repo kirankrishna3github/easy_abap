@@ -27,24 +27,24 @@ Latest build (v.06): zcl_easy_abap.abap (link)
 ## Example for the beginning
 
 ```ABAP
-report zre_easy_abap_example.
+"wherever you want to use the easy abap functions
 
 "create an instance of your new helper class
-lo_help = new zcl_easy_abap( ).
+lo_easy = new zcl_easy_abap( ).
 
 "and start working with it
 "...
 
 "for instance: read a t100 message
-lo_help->msg( exporting i_any = '123(bus123id)' importing es_bapi = data(ls_msg) ).
+lo_easy->msg( exporting i_any = '123(bus123id)' importing es_bapi = data(ls_msg) ).
 
 "save message persistent
-lo_help->db_save( 
-          bus    = 'X'       "business application log
-          i_key  = 'ZLOG_01' "bal class
-          i_key2 = 'ZMSG'    "bal subclass
-          i_any  = ls_msg    "Message content
-          ).
+lo_easy->db_save( 
+           bus    = 'X'       "business application log
+           i_key  = 'ZLOG_01' "bal class
+           i_key2 = 'ZMSG'    "bal subclass
+           i_any  = ls_msg    "Message content
+         ).
 
 "and so on... (watch out other examples)
 ```
