@@ -1,14 +1,13 @@
 ## Easy Abap
 
-### Description
-
 This project collects utility and helper functions for everyday use in abap.
 
-### Requirements
+Requirement: ABAP Version 702 or higher
 
-You need SAP NetWeaver 7.50 SP12.
+Latest build: zabapgit.abap (link)
 
-### Download and Installation
+
+### Installation
 
 1. create a new class in your system
 2. copy the file 'ABCD' into the global class 
@@ -19,6 +18,9 @@ You need SAP NetWeaver 7.50 SP12.
 
 ### Example
 
+Ein Beispiel
+
+more Example (here)
 
 ### Known Issues
 
