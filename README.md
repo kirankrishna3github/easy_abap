@@ -6,6 +6,11 @@ Requirement: ABAP Version 702 or higher
 
 Latest build: zcl_easy_abap.abap (link)
 
+## Design Goals
+
+* Easy installation on every abap system, just copy one class
+* Easy to use, no requirements, no side effects, just create an instance and start working
+* User friendly, every method tries to accept data as typeless as possible
 
 ## Installation
 
