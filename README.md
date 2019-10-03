@@ -4,7 +4,7 @@ Library that simplifies programming with abap. This project collects utility and
 
 Requirement: ABAP Version 702 or higher
 
-Latest build: [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tree/master/zcl_easy_abap)(v.0.6)
+Latest build: [zcl_easy_abap (v.0.6)](https://github.com/lars-sawyer/easy_abap/tree/master/zcl_easy_abap) 
 
 ## Design Goals
 
