@@ -7,7 +7,7 @@ Requirement: ABAP Version 702 or higher
 Latest build: zabapgit.abap (link)
 
 
-### Installation
+## Installation
 
 * create a new class in your system
 * copy the file 'ABCD' into the global class 
@@ -16,13 +16,13 @@ Latest build: zabapgit.abap (link)
     * Rename line 6 with the name of your new class
 * optional: copy the unit tests into the unit test section
 
-### Example
+## Example
 
 Ein Beispiel
 
 more Example (here)
 
-### Known Issues
+## Known Issues
 
 None.
 
