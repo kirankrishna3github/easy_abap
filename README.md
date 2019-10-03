@@ -19,12 +19,11 @@ Latest build: zcl_easy_abap.abap (link)
 ## Example
 
 ```ABAP
-sCreate an instance of your helper class
+"create an instance of your new helper class
 lo_help = new zcl_easy_abap( ).
 
-"start working: for instance read a t100 message
-lo_help->msg( exporting i_any = '123(bus123id) importing es_bapi = data(ls_bapi) ).
-*ls_bapi your message with all information
+"start working, for instance: read a t100 message
+lo_help->msg( exporting i_any = '123(bus123id)' importing es_bapi = data(ls_bapi) ).
 ```
 More examples
    * Message Handling (here)
