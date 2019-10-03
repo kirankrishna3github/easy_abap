@@ -3,7 +3,6 @@
 Library that simplifies programming with abap. This project collects utility and helper functions for everyday use in abap.
 
 Requirement: ABAP Version 702 or higher
-
 Latest build (v.06): zcl_easy_abap.abap (link)
 
 ## Design Goals
@@ -24,7 +23,7 @@ Latest build (v.06): zcl_easy_abap.abap (link)
    * Exceptions (here)
    * BAL, GOS, (here)
 
-## Example for the beginning
+## An example for the beginning
 
 ```ABAP
 "wherever you want to use the easy abap functions
@@ -43,7 +42,7 @@ lo_easy->db_save(
            bus    = 'X'       "business application log
            i_key  = 'ZLOG_01' "bal class
            i_key2 = 'ZMSG'    "bal subclass
-           i_any  = ls_msg    "Message content
+           i_any  = ls_msg    "message content
          ).
 
 "and so on... (watch out other examples)
