@@ -1,8 +1,9 @@
-## Easy Abap
+## Easy_Abap
 
 Library that simplifies programming with abap. This project collects utility and helper functions for everyday use in abap.
 
 Requirement: ABAP Version 702 or higher
+
 Latest build (v.06): zcl_easy_abap.abap (link)
 
 ## Design Goals
@@ -26,9 +27,9 @@ Latest build (v.06): zcl_easy_abap.abap (link)
 ## An example for the beginning
 
 ```ABAP
-"wherever you want to use the easy abap functions
+"wherever you want to use the functions of easy_abap
 
-"create an instance of your new helper class
+"create an instance of your new class
 lo_easy = new zcl_easy_abap( ).
 
 "and start working with it
