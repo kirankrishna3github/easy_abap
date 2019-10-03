@@ -36,7 +36,7 @@ lo_easy = new zcl_easy_abap( ).
 "...
 
 "for instance: read a t100 message
-lo_easy->msg( exporting i_any = '123(bus123id)' importing es_bapi = data(ls_msg) ).
+data(ls_msg) = lo_easy->get_msg('123(bus123id)').
 
 "save message persistent
 lo_easy->db_save( 
