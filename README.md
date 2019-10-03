@@ -9,12 +9,12 @@ Latest build: zabapgit.abap (link)
 
 ### Installation
 
-1. create a new class in your system
-2. copy the file 'ABCD' into the global class 
-    2.1 Rename line 5 with the name of your new class
-3. copy the file 'ABCD' into the local class section
-    3.1 Rename line 6 with the name of your new class
-4. optional: copy the unit tests into the unit test section
+* create a new class in your system
+* copy the file 'ABCD' into the global class 
+    * Rename line 5 with the name of your new class
+* copy the file 'ABCD' into the local class section
+    * Rename line 6 with the name of your new class
+* optional: copy the unit tests into the unit test section
 
 ### Example
 
