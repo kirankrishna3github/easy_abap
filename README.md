@@ -1,6 +1,6 @@
 ## Easy Abap
 
-This project collects utility and helper functions for everyday use in abap.
+Library that simplifies programming with abap. This project collects utility and helper functions for everyday use in abap.
 
 Requirement: ABAP Version 702 or higher
 
