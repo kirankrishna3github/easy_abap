@@ -19,7 +19,7 @@ Latest build (v.06): [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tr
    * Rename line 5 with the name of your new class
 * Copy [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/master/zcl_easy_abap/zcl_easy_abap_local_types.abap) into the local class section of your new class
    * Rename line 6 with the name of your new class
-* Start working and watch out the examples (link)
+* Start working and watch out the examples
    * Message Handling (here)
    * Exceptions (here)
    * BAL, GOS, (here)
@@ -40,7 +40,7 @@ data(ls_msg) = lo_easy->get_msg('123(bus123id)').
 
 "save message persistent
 lo_easy->db_save( 
-           bus    = 'X'       "business application log
+           bal    = 'X'       "business application log
            i_key  = 'ZLOG_01' "bal class
            i_key2 = 'ZMSG'    "bal subclass
            i_any  = ls_msg    "message content
