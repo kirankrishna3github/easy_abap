@@ -8,9 +8,9 @@ Latest build (v.06): zcl_easy_abap.abap (link)
 
 ## Design Goals
 
-* Easy installation: works on every abap system, just copy one class and change two lines of code with the name of the new class
+* Easy installation: works on every abap system, just copy one class and change two lines of code with the name of the class
 * Easy to use: no requirements, no side effects, just create an instance and start calling its methods
-* User friendly, every method tries to accept data as typeless as possible
+* User-friendly: every method tries to accept data as typeless as possible, don't waste time with conversions any more
 
 ## Installation
 
