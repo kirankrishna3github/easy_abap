@@ -17,7 +17,7 @@ Latest build (v.06): [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tr
 * Create a new global class in your abap system
 * Copy [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/master/zcl_easy_abap/zcl_easy_abap_global_class.abap) into the global class section of your new class
    * Rename line 5 with the name of your new class
-* Copy [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/blob/master/zcl_easy_abap/zcl_easy_abap_local_types.abap) into the local class section of your new class
+* Copy [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/master/zcl_easy_abap/zcl_easy_abap_local_types.abap) into the local class section of your new class
    * Rename line 6 with the name of your new class
 * Start working and watch out the examples (link)
    * Message Handling (here)
