@@ -24,7 +24,7 @@ Latest build (v.06): zcl_easy_abap.abap (link)
    * Exceptions (here)
    * BAL, GOS, (here)
 
-## Example
+## Example for the first start
 
 ```ABAP
 report zre_easy_abap_example.
