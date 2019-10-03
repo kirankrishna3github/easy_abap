@@ -32,7 +32,7 @@ Latest build (v.06): zcl_easy_abap.abap (link)
 "create an instance of your new class
 lo_easy = new zcl_easy_abap( ).
 
-"and start working with it
+"and just start working with it
 "...
 
 "for instance: read a t100 message
