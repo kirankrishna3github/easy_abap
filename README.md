@@ -2,7 +2,7 @@
 
 Library that simplifies programming with abap. This project collects utility and helper functions for everyday use in abap.
 
-Requirement: ABAP Version 702 or higher
+Requirement: ABAP Version 740 or higher
 
 Latest build: [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tree/master/zcl_easy_abap) (v.0.6)
 
@@ -15,9 +15,9 @@ Latest build: [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tree/mast
 ## Installation
 
 * Create a new global class in your abap system
-* Copy [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/master/zcl_easy_abap/zcl_easy_abap_global_class.abap) into the global class section of your new class
+* Copy the [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/master/zcl_easy_abap/zcl_easy_abap_global_class.abap) into the global class section of your new class
    * Rename line 5 with the name of your new class
-* Copy [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/master/zcl_easy_abap/zcl_easy_abap_local_types.abap) into the local class section of your new class
+* Copy the [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/master/zcl_easy_abap/zcl_easy_abap_local_types.abap) into the local class section of your new class
    * Rename line 6 with the name of your new class
 * Start working and watch out the examples
    * [Message Handling](link)
@@ -25,10 +25,9 @@ Latest build: [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tree/mast
    * [BAL, GOS, ...](link)
    * [others](link)
 
-## An example for the beginning
+## Quick Start
 
 ```ABAP
-"wherever you want to use the functions of easy abap
 
 "create an instance of the new class
 data(lo_easy) = new zcl_easy_abap( ).
