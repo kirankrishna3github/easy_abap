@@ -19,8 +19,9 @@ Latest build: [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tree/mast
    * Rename line 5 with the name of your new class
 * Copy the [following content](https://raw.githubusercontent.com/lars-sawyer/easy_abap/master/zcl_easy_abap/zcl_easy_abap_local_types.abap) into the local class section of your new class
    * Rename line 6 with the name of your new class
-* Start working and watch out the examples
+* Start working
    * [Message Handling](link)
+   * [Log](link)
    * [Exceptions](link)
    * [BAL, GOS, ...](link)
    * [others](link)
