@@ -1,0 +1,447 @@
+report zre_report_example_exceptions.
+
+CLASS lcl_app DEFINITION.
+
+  PUBLIC SECTION.
+
+    CLASS-METHODS:
+      main.
+  PROTECTED SECTION.
+
+    CLASS-METHODS example_get_data.
+
+ENDCLASS.
+
+CLASS lcl_app IMPLEMENTATION.
+
+  METHOD main.
+
+
+    DATA lo_help TYPE REF TO zcl_stc01_easy_abap_01. " abap_test.
+    DATA lx_root TYPE REF TO cx_root.
+    lo_help = NEW #( ).
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " Nachrichten Übergeben
+
+    TRY.
+
+        lo_help->raise('Es ist ein Fehler passiert.').
+
+      CATCH cx_root INTO lx_root.
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+    TRY. "t100 tEXTE
+
+        DATA ls_bapi TYPE bapiret2.
+        "DE /ASU/GENERAL    004 Fehler beim Lesen der Datei &1
+        ls_bapi-id = '/ASU/GENERAL'.
+        ls_bapi-number = 004.
+        ls_bapi-message_v1 = 'DATEINAME'.
+
+        lo_help->raise( ls_bapi ).
+
+      CATCH cx_root INTO lx_root.
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+    TRY.  "Debugging T100
+
+        lo_help->raise( ls_bapi ).
+
+
+      CATCH cx_root INTO lx_root.
+*        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+    TRY.  "Debugging Exception
+
+        lx_root = lo_help->raise( ls_bapi ).
+        RAISE EXCEPTION lx_root.
+
+      CATCH cx_root INTO lx_root.
+*        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+
+    TRY. "Nachrichten einfach übergeben
+
+
+        lo_help->raise( sy ).
+        lo_help->raise( lo_help->get_msg( iv_id = '/ASU/GENERAL' iv_no = 004 iv_v1 = 'NAME') ).
+        lo_help->raise('004(/ASU/GENERAL)').
+
+      CATCH cx_root INTO lx_root.
+*        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+    TRY. "stc log Objekt
+
+*       data(lo_bal) =  new lo_bal
+
+
+      CATCH cx_root INTO lx_root.
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+
+    TRY. "Einfache Übergabe nach Fuba
+
+        DATA lt_return TYPE STANDARD TABLE OF bapiret2.
+        DATA lv_docnum TYPE char10.
+
+        CALL FUNCTION 'BAPI_0036_GET_DETAIL'
+          EXPORTING
+            documentnumber = lv_docnum     " GM Budget Entry Document Number
+          TABLES
+            return         = lt_return.   " Return Parameter
+        IF sy-subrc <> 0.
+          lo_help->raise( i_any = 'Fehler beim Lesen von Details'
+                          i_add_t100 = lt_return ).
+        ENDIF.
+
+
+      CATCH cx_root INTO lx_root.
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " Zusatzdaten
+
+
+    TRY. "Write Befehl
+
+        DATA lt_spfli TYPE STANDARD TABLE OF spfli.
+
+        SELECT  *
+        FROM spfli
+        INTO TABLE lt_spfli
+        UP TO 10 ROWS
+          .
+        lo_help->raise( i_any = 'Flugdaten können nicht weiterverarbeitet werden'
+                        i_add_write = lt_spfli ).
+
+
+      CATCH cx_root INTO lx_root.
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+
+    TRY. "JSON Daten übergeben
+
+        lo_help->raise( i_any = 'Flugdaten können nicht weiterverarbeitet werden'
+                        i_ser_data = lo_help->get( json_deep = 'X' i_any = lt_spfli )
+                        ).
+
+
+      CATCH cx_root INTO lx_root.
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+
+    TRY. "Values übergeben
+
+        DATA lv_airpfrom TYPE spfli-airpfrom VALUE 'BER'.
+        DATA lv_airpto TYPE spfli-airpto VALUE 'TXL'.
+
+        SELECT  *
+        FROM spfli
+        INTO TABLE lt_spfli
+        UP TO 10 ROWS
+        WHERE airpfrom = lv_airpfrom
+        AND   airpto   = lv_airpto
+          .
+        lo_help->raise( i_any = 'Flugdaten können nicht weiterverarbeitet werden'
+                        i_ser_value = lo_help->get( json_deep = 'X'
+                                                     i_any  = lv_airpfrom
+                                                     i_any2 = lv_airpto )
+                             ).
+
+      CATCH cx_root INTO lx_root.
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " Exceptions aufeinander abbilden
+
+    DATA lx_error TYPE REF TO cx_root.
+
+
+    TRY. "Vorgänger
+
+        lx_error = lo_help->raise( 'Flugdaten können nicht weiterverarbeitet werden' ).
+
+        lo_help->raise( i_any = 'Ausgabe der aktuellen Fluginformationen nicht möglich.'
+                        i_prev = lx_root ).
+
+      CATCH cx_root INTO lx_root.
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+    TRY. "weitere Ebene
+
+        lo_help->raise( lx_root ).
+
+
+      CATCH cx_root INTO lx_root.
+        TRY.
+            lo_help->raise( i_any  = 'Das ist eine Kopfinformation mit weiteren Infos'
+                            i_prev = lx_root ).
+
+          CATCH cx_root INTO lx_root.
+            lo_help->gui( lx_root ).
+        ENDTRY.
+    ENDTRY.
+
+
+
+    TRY. "komplexe Exception
+
+        CALL FUNCTION 'BAPI_0036_GET_DETAIL'
+          EXPORTING
+            documentnumber = lv_docnum    " GM Budget Entry Document Number
+          TABLES
+            return         = lt_return.   " Return Parameter
+        IF sy-subrc <> 0.
+
+          lo_help->raise( i_head = 'Budgetinformationen können nicht gelesen werden'
+                          i_any  = 'Fuba BAPI_0036_GET_DETAIL fehlerhafr durchlaufen'
+                          i_add_t100 = lt_return
+                          i_ser_value = lv_docnum
+                          i_prev = lo_help->raise(
+                                        i_any = 'Bitte Flugdaten kontrollieren'
+                                        i_add_write = lt_spfli )
+                          ).
+
+        ENDIF.
+
+      CATCH cx_root INTO lx_root.
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+
+    TRY. "Extremform
+
+        lo_help->raise( i_head = lo_help->raise(  'Budgetinformationen können nicht gelesen werden' )
+                        i_any  = 'Fuba BAPI_0036_GET_DETAIL fehlerhafr durchlaufen'
+                        i_add_t100 = lt_return
+                        i_ser_value = lv_docnum
+                        i_prev = lo_help->raise(
+                                      i_any = 'Bitte Flugdaten kontrollieren'
+                                      i_add_write = lt_spfli
+                                      i_prev = lx_root )
+                        ).
+
+
+      CATCH cx_root INTO lx_root.
+        BREAK-POINT. "Exceptions zeigen
+        lo_help->gui( lx_root ).
+    ENDTRY.
+
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " Infos auslesen
+
+
+*    lo_help->cx_info(
+*      EXPORTING
+*        ix_root      = lx_root
+*      IMPORTING
+*        ev_name      =
+*        et_add_t100  = data(lt_t100)
+*        ev_guid      =
+*        et_source    =
+*        et_callstack =
+*        ev_val_print =
+*        es_bapiret   =
+*        e_add_serial =
+*    ).
+
+    IF lx_root->previous IS BOUND.
+
+*     lo_help->cx_info(
+*      EXPORTING
+*        ix_root      = lx_root->previous
+*      IMPORTING
+*        ev_name      =
+*        et_add_t100  = data(lt_t100)
+*        ev_guid      =
+*        et_source    =
+*        et_callstack =
+*        ev_val_print =
+*        es_bapiret   =
+*        e_add_serial =
+*    ).
+
+    ENDIF.
+
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " Andere Sachen machen
+
+    "BAL Abspeichern
+    "wiederholen anzeigen
+
+    "T100 anzeigen
+
+    "Vari Tabelle speichern
+    "GUID auslesen und anzeigen
+    "Auslesen
+
+    "Serialisierte Daten auslesen und was machen Kubdenauftrag
+    "Wiederholen JSON Daten erzeugen
+
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " Kontextabhängige Exceptions
+
+
+    "Exceptions mit Check in bestimmten Situationen
+    "Fuba
+    "Select
+    "is initial
+    "log is error
+
+
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " Ablaufsteuerung
+
+
+    TRY. "retry
+
+        DATA lv_tanum TYPE tanum.
+
+        IF lv_tanum IS INITIAL.
+          lo_help->raise( 'Transportauftrag ist nicht gültig' ).
+        ENDIF.
+
+
+      CATCH cx_root INTO lx_root.
+
+        IF lv_tanum IS INITIAL.
+          lv_tanum = '123'.
+          RETRY.
+        ELSE.
+          lo_help->gui( lx_root ).
+        ENDIF.
+
+    ENDTRY.
+
+
+    TRY. "resume
+
+        CLEAR lv_tanum.
+        IF lv_tanum IS INITIAL.
+          lo_help->raise(
+                    i_any = 'Transportauftrag ist nicht gültig'
+                    resumable = 'X'
+                    ).
+        ENDIF.
+
+
+      CATCH BEFORE UNWIND cx_root INTO lx_root.
+
+        IF lv_tanum IS INITIAL.
+          "Ist egal, weiter gehts
+          RESUME.
+        ELSE.
+          lo_help->gui( lx_root ).
+        ENDIF.
+
+    ENDTRY.
+
+
+    TRY. "Arbeiten mit Error Codes
+
+        CONSTANTS:
+          BEGIN OF cs_error_code,
+            input_initial  TYPE string VALUE '01',
+            no_data_found  TYPE string VALUE '02',
+            wrong_language TYPE string VALUE '03',
+          END OF cs_error_code.
+
+
+        lo_help->raise( i_code = cs_error_code-no_data_found ).
+
+
+      CATCH cx_root INTO lx_root.
+        BREAK-POINT. "Attribut zeigen
+
+        CASE lo_help->get( cx_code = 'X' i_any = lx_root ).
+
+          WHEN cs_error_code-input_initial.
+            "do something
+
+          WHEN cs_error_code-no_data_found.
+            lo_help->raise( i_any = 'Kein Ergebnis für Eingabe' i_prev = lx_root ).
+
+          WHEN OTHERS.
+            lo_help->raise( i_any = 'Ein unbekannter Fehler ist aufgetreten' i_prev = lx_root ).
+        ENDCASE.
+
+    ENDTRY.
+
+
+
+    TRY. "retry / "resume "Error codes
+
+
+
+
+        example_get_data(  ).
+
+
+
+      CATCH BEFORE UNWIND cx_root INTO lx_root.
+        BREAK-POINT.
+
+        CASE lo_help->get( cx_code = 'X' i_any = lx_root ).
+
+          WHEN cs_error_code-no_data_found.
+            "neuer Versuch mit anderem Input
+            RETRY.
+
+          WHEN cs_error_code-wrong_language.
+            "Ist egal, besser falsche Sprache als gar kein Text
+            RESUME.
+
+          WHEN OTHERS.
+            "kA was schief gelaufen ist, propagieren Exception, Aufrufer muss sich drum kümmern
+            lo_help->raise( i_any = 'Ein unbekannter Fehler ist aufgetreten' i_prev = lx_root ).
+        ENDCASE.
+
+    ENDTRY.
+
+
+  ENDMETHOD.
+
+
+  METHOD example_get_data.
+
+  ENDMETHOD.
+
+ENDCLASS.
+
+START-OF-SELECTION.
+  lcl_app=>main(  ).
