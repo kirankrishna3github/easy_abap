@@ -1,6 +1,6 @@
 ## Easy Abap
 
-Library that simplifies programming with abap. This project collects utility and helper functions for everyday use in abap.
+Library that simplifies programming with abap. This project collects utility and helper functions for everyday use.
 
 Requirement: ABAP Version 740 or higher
 
@@ -9,8 +9,8 @@ Latest build: [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tree/mast
 ## Design Goals
 
 * Easy installation: works on every abap system, just copy one class and change two lines of code with the name of the class
-* Easy to use: no requirements, no side effects, just create an instance and start calling its methods
-* User-friendly: every method tries to accept data as typeless as possible, don't waste time with conversions any more
+* Easy to use: no requirements, just create an instance and start calling its methods
+* User-friendly: every method tries to accept data as typeless as possible, don't waste time with conversions any more, no side effects
 
 ## Installation
 
