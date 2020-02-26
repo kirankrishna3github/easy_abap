@@ -1,949 +1,920 @@
-class ZCL_easy_abap definition
+"! Utility Functions
+"! Helps with messages, exceptions, conversions, gui popups ...
+"! v 0.61 - 01.02.2020
+class zcl_easy_abap definition
   public
-  final
   create public .
 
+  public section.
+    type-pools abap .
+    type-pools rsds .
 
-public section.
-  type-pools ABAP .
-  type-pools RSDS .
+    types:
+      begin of ty,
 
-  types:
-    BEGIN OF ty,
-             o_easy_abap TYPE REF TO zcl_easy_abap,
-             BEGIN OF  s_cx_data,
-               s_bapiret     TYPE bapiret2,
-               s_callstack   TYPE abap_callstack_line,
-               t_callstack   TYPE abap_callstack,
-               t_source_code TYPE stringtab,
-               serial_value  TYPE string,
-               add_serial    TYPE string,
-               add_t100      TYPE bapiret2_tab,
-               add_write     TYPE stringtab,
-               noid          TYPE string,
-               s_sy          TYPE sy,
-               timestampl    TYPE timestampl,
-               guid          TYPE string,
-               code          TYPE string,
-             END OF s_cx_data,
-             t_ref_data  TYPE STANDARD TABLE OF REF TO data WITH EMPTY KEY,
-             t_ref_obj   TYPE STANDARD TABLE OF REF TO object WITH EMPTY KEY,
-             t_bal       TYPE STANDARD TABLE OF balm WITH EMPTY KEY,
-           END OF ty .
-
-  constants:
-    BEGIN OF cs,
-        BEGIN OF s_popup_answer,
-          exit TYPE string VALUE 'EXIT',
-          yes  TYPE string VALUE 'YES',
-          no   TYPE string VALUE 'NO',
-        END OF s_popup_answer,
-        BEGIN OF s_alv_event_type,
-          double_click       TYPE string VALUE 'DOUBLE_CLICK',
-          hotspot_click      TYPE string VALUE 'HOTSPOT_CLICK' ##NO_TEXT,
-          toolbar_click      TYPE string VALUE 'TOOLBAR_CLICK',
-          popup_cancel       TYPE string VALUE 'POPUP_CANCEL',
-          popup_close        TYPE string VALUE 'POPUP_CLOSE',
-          after_data_changed TYPE string VALUE 'AFTER_DATA_CHANGED',
-          menu_button        TYPE string VALUE 'MENU_BUTTON',
-          f4_help            TYPE string VALUE 'F4_HELP',
-        END OF s_alv_event_type,
-        BEGIN OF s_error_code,
-          user_exit     TYPE string     VALUE 'ZCX_USER_EXIT',
-          no_data       TYPE string     VALUE 'ZCX_NO_DATA',
-          input_invalid TYPE string     VALUE 'ZCX_INPUT_INVALID',
-        END OF s_error_code,
-      END OF cs .
-  data:
-    BEGIN OF ms_data,
-            t_log TYPE bapiret2_tab,
-            t_bal TYPE ty-t_bal,
-          END OF ms_data .
-  class-data:
-*    DATA mt_log TYPE bapiret2_tab .
-    BEGIN OF ss_db_buffer,
-        t_t100       TYPE HASHED TABLE OF t100       WITH UNIQUE KEY sprsl arbgb msgnr,
-        t_dd04t      TYPE HASHED TABLE OF dd04t      WITH UNIQUE KEY rollname ddlanguage,
-        t_kna1       TYPE HASHED TABLE OF kna1       WITH UNIQUE KEY kunnr,
-        t_lfa1       TYPE HASHED TABLE OF lfa1       WITH UNIQUE KEY lifnr,
-        t_makt       TYPE HASHED TABLE OF makt       WITH UNIQUE KEY spras matnr,
-        t_dd04l      TYPE HASHED TABLE OF dd04l      WITH UNIQUE KEY rollname,
-        t_dd01l      TYPE HASHED TABLE OF dd01l      WITH UNIQUE KEY domname,
-        t_materialid TYPE HASHED TABLE OF materialid WITH UNIQUE KEY matnr_int,
-        t_mara       TYPE HASHED TABLE OF mara       WITH UNIQUE KEY matnr,
-        t_ihpa       TYPE HASHED TABLE OF ihpa       WITH UNIQUE KEY objnr parvw counter,
-        t_cslt       TYPE HASHED TABLE OF cslt      WITH UNIQUE KEY spras kokrs lstar,
-      END OF ss_db_buffer .
-
-*  events EVENT
-*    exporting
-*      value(E_DATA) type DATA .
-  class-methods GET
-    importing
-      !CONV_IN type ABAP_BOOL optional
-      !CONV_OUT type ABAP_BOOL optional
-      !PRINT type ABAP_BOOL optional
-      !PRINT_DEEP type ABAP_BOOL optional
-      !XML type ABAP_BOOL optional
-      !JSON type ABAP_BOOL optional
-      !JSON_DEEP type ABAP_BOOL optional
-      !ZIP type ABAP_BOOL optional
-      !UNZIP type ABAP_BOOL optional
-      !PARAM_USER type ABAP_BOOL optional
-      !TRIM_UPPER_CASE type ABAP_BOOL optional
-      !TRIM type ABAP_BOOL optional
-      !PARAM_SYSTEM type ABAP_BOOL optional
-      !PARAM_ID type ABAP_BOOL optional
-      !MSG_TYPE type ABAP_BOOL optional
-      !TEXT type ABAP_BOOL optional
-      !DD04T type ABAP_BOOL optional
-      !GUID16 type ABAP_BOOL optional
-      !RTTI_KIND type ABAP_BOOL optional
-      !RTTI_TYPE type ABAP_BOOL optional
-      !RTTI_TYPE_KIND type ABAP_BOOL optional
-      !RTTI_TYPE_SUPER type ABAP_BOOL optional
-      !RTTI_TYPE_DYNAM type ABAP_BOOL optional
-      !POPUP_CHOOSE type ABAP_BOOL optional
-      !POPUP_CONFIRM type ABAP_BOOL optional
-      !POPUP_GET_VALUE type ABAP_BOOL optional
-      !METHODNAME type ABAP_BOOL optional
-      !CX_CODE type ABAP_BOOL optional
-      !I_ANY type ANY optional
-      !I_ANY2 type ANY optional
-      !I_ANY3 type ANY optional
-      !I_ANY4 type ANY optional
-      !I_ANY5 type ANY optional
-      !IV_LANGU type ANY default SY-LANGU
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-      !LOG_INFO type ABAP_BOOL optional
-    returning
-      value(R_RESULT) type STRING .
-  class-methods CFW
-    importing
-      !GET_FCAT type ABAP_BOOL optional
-      !I_ANY type ANY optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    exporting
-      !E_ANY type ANY .
-  class-methods GET_BUS
-    importing
-      !VEKP_EXIDV_BY_VENUM type ABAP_BOOL optional
-      !VEKP_VENUM_BY_EXIDV type ABAP_BOOL optional
-      !MAKT_MAKTX_BY_MATNR type ABAP_BOOL optional
-      !MATNR_EXT type ABAP_BOOL optional
-      !MARA_MEINS_BY_MATNR type ABAP_BOOL optional
-      !VBAK_VBELN_BY_LIKP_VORG type ABAP_BOOL optional
-      !KNA1_NAME1_BY_KUNNR type ABAP_BOOL optional
-      !LFA1_NAME1_BY_LIFNR type ABAP_BOOL optional
-      !VBPA_KUNNR_BY_VBELN_POS_PARVW type ABAP_BOOL optional
-      !IHPA_PARNR_BY_OBJNR_PARVW type ABAP_BOOL optional
-      !CSLT_LTEXT_BY_LANG_KOKRS_LSTAR type ABAP_BOOL optional
-      !USERDETAIL_INFO_BY_PERNR type ABAP_BOOL optional
-      !I_ANY type ANY optional
-      !I_ANY2 type ANY optional
-      !I_ANY3 type ANY optional
-      !IV_LANGU type ANY default SY-LANGU
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-      !CONV_EXIT type ABAP_BOOL default ABAP_FALSE
-      !REFRESH_MEMORY type ABAP_BOOL default ABAP_FALSE
-    returning
-      value(R_RESULT) type STRING .
-  class-methods GET_MSG
-    importing
-      !I_ANY type ANY optional
-      !IV_ID type ANY optional
-      !IV_NO type ANY optional
-      !IV_TYPE type ANY optional
-      !IV_V1 type ANY optional
-      !IV_V2 type ANY optional
-      !IV_V3 type ANY optional
-      !IV_V4 type ANY optional
-      !IV_LANGU type ANY default SY-LANGU
-      !USE_T100_ONLY type ABAP_BOOL default ABAP_FALSE
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    preferred parameter I_ANY
-    returning
-      value(R_RESULT) type BAPIRET2 .
-  class-methods DO
-    importing
-      !FREE_SY type ABAP_BOOL optional
-      !COMMIT_A_WAIT type ABAP_BOOL optional
-      !ROLLBACK type ABAP_BOOL optional
-      !SEND_EMAIL type ABAP_BOOL optional
-      !SEND_IDOC type ABAP_BOOL optional
-      !RAISE_EVENT type ABAP_BOOL optional
-      !RFC_NEW_TASK type ABAP_BOOL optional
-      !RFC_BACKGROUND_TASK type ABAP_BOOL optional
-      !RFC_PARALLEL_TASK type ABAP_BOOL optional
-      !AMC_SEND type ABAP_BOOL optional
-      !HTTP_REQ_SET type ABAP_BOOL optional
-      !HTTP_REQ_GET type ABAP_BOOL optional
-      !REPORT_START type ABAP_BOOL optional
-      !INIT type ABAP_BOOL optional
-      !INIT_CUST type ABAP_BOOL optional
-      !I_ANY type ANY optional
-      !I_ANY2 type ANY optional
-      !I_ANY3 type ANY optional
-      !I_ANY5 type ANY optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    exporting
-      !E_ANY type ANY .
-  class-methods INFO
-    importing
-      !IV_DEPTH type ANY optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    exporting
-      value(EV_DATE) type CLIKE
-      value(EV_TIME) type CLIKE
-      value(EV_TIMESTAMPL) type TIMESTAMPL
-      value(EV_TIME_ISO8601) type CLIKE
-      !EV_TIME_WRITE type STRING
-      !EV_DATE_WRITE type STRING
-      !EV_USERNAME type STRING
-      !EV_IP_ADRESS type STRING
-      !EV_IS_GUI_ACTIVE type ABAP_BOOL
-      !EV_SY_MSGTEXT type STRING
-      !ES_CALLSTACK type ABAP_CALLSTACK_LINE
-      !ET_CALLSTACK type ABAP_CALLSTACK
-      !EV_REPID type CLIKE
-      !EV_METHOD type CLIKE
-      !ET_DEQUEUE_TABLE type WLF_SEQG3_TAB
-      !EV_WORK_PROCESS_ID type STRING
-      !ET_SOURCE_CODE type STRINGTAB
-      !EV_LOG_INFO type STRING
-      !E_MOCK type ANY .
-  class-methods CHECK
-    importing
-      !TAB_EQUAL type ABAP_BOOL optional
-      !SYST type ABAP_BOOL optional
-      !T100_ERROR type ABAP_BOOL optional
-      !T100_MSG type ABAP_BOOL optional
-      !VALUE_IN_STRUCT type ABAP_BOOL optional
-      !IN_DOMRANGE type ABAP_BOOL optional
-      !INITIAL type ABAP_BOOL optional
-      !BOUND type ABAP_BOOL optional
-      !TRUE type ABAP_BOOL optional
-      !FALSE type ABAP_BOOL optional
-      !ASSIGNED type ABAP_BOOL optional
-      !RANGE_VALID type ABAP_BOOL optional
-      !FIELD_EXIST type ABAP_BOOL optional
-      !FUNCTION_EXIST type ABAP_BOOL optional
-      !LOCK_IS_SET type ABAP_BOOL optional
-      !CASTABLE type ABAP_BOOL optional
-      !CONVERTIBLE type ABAP_BOOL optional
-      !RTTI_TYPE_KIND_CSEQ type ABAP_BOOL optional
-      !VALUE_IN_TAB type ABAP_BOOL optional
-      !GUI_ACTIVE type ABAP_BOOL optional
-      value(I_ANY) type ANY optional
-      value(I_ANY2) type ANY optional
-      value(I_ANY3) type ANY optional
-      value(I_ANY4) type ANY optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-      !IV_DEPTH type ANY default 0
-    returning
-      value(R_RESULT) type ABAP_BOOL .
-  class-methods LOCK
-    importing
-      !SET type ABAP_BOOL optional
-      !FREE type ABAP_BOOL optional
-      !SET_SNAP type ABAP_BOOL optional
-      !IS_SET type ABAP_BOOL optional
-      !A_COLLECT type ABAP_BOOL optional
-      !SET_COLLECT type ABAP_BOOL optional
-      !FREE_COLLECT type ABAP_BOOL optional
-      !I_OBJECT type ANY optional
-      !IV_MODE type ANY default 'E'
-      !IV_SCOPE type ANY default '2'
-      !IV_UNAME type ANY default SY-UNAME
-      !I_ANY type ANY default SY-MANDT
-      !I_ANY2 type ANY optional
-      !I_ANY3 type ANY optional
-      !I_ANY4 type ANY optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    exporting
-      !ET_SNAP type WLF_SEQG3_TAB
-      !EV_IS_SET type ABAP_BOOL .
-  class-methods ITAB
-    importing
-      !DELETE_DUPLICATES type ABAP_BOOL optional
-      !CHANGE_SEQUENCE type ABAP_BOOL optional
-      !MOVE_CORRESPONDING type ABAP_BOOL optional
-      !MERGE type ABAP_BOOL optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    changing
-      !CT_TAB type STANDARD TABLE .
-  class-methods RTTI
-    importing
-      !I_ANY type ANY optional
-      !IV_NAME type ANY optional
-      !I_FNAM_TYPE type ANY optional
-      !I_FNAM_TAB type ANY optional
-      !IV_LANGU type ANY default SY-LANGU
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    preferred parameter I_ANY
-    exporting
-      !EV_KIND type STRING
-      !EV_TYPE type STRING
-      !EV_TYPE_IS_DDIC type ABAP_BOOL
-      !EV_TYPE_KIND type STRING
-      !EV_TYPE_KIND_IS_C type ABAP_BOOL
-      !EV_LINE_KIND type STRING
-      !EV_LINE_TYPE type STRING
-      !EV_LINE_TYPE_KIND type STRING
-      !EV_LINE_TYPE_KIND_IS_C type ABAP_BOOL
-      !EV_LINE_TYPE_IS_DDIC type ABAP_BOOL
-      !EV_REF_DYN type STRING
-      !EV_REF_STAT type STRING
-      !EV_REF_SUPER type STRING
-      !ET_REF_SUPER type STRINGTAB
-      !ET_COMP type ABAP_COMPONENT_TAB
-      !ET_DOMRANGE type STANDARD TABLE
-      !EV_CONVEXIT type CLIKE
-      !EV_IN_DOMR type ABAP_BOOL
-      !EV_FIELDNAME type CLIKE
-      !EV_TYPEDESCR type CLIKE
-      !EV_OUTPUTLEN type I
-      !EV_LENGTH type I
-      !EO_HANDLE type ref to CL_ABAP_DATADESCR .
-  class-methods TRANS
-    importing
-      !ID type ABAP_BOOL optional
-      !XML type ABAP_BOOL optional
-      !JSON type ABAP_BOOL optional
-      !PRINT type ABAP_BOOL optional
-      !ZIP type ABAP_BOOL optional
-      !UNZIP type ABAP_BOOL optional
-      !TAB_2_TAB type ABAP_BOOL optional
-      !XML_2 type ABAP_BOOL optional
-      !JSON_2 type ABAP_BOOL optional
-      !VALUE_2_RANGE type ABAP_BOOL optional
-      !RANGETAB_2_WHERE type ABAP_BOOL optional
-      !PARAMS_2_STRUCT type ABAP_BOOL optional
-      !VALUE_2_RANGETAB type ABAP_BOOL optional
-      !STRING_2_STRINGTAB type ABAP_BOOL optional
-      !SPLIT_WORD type ABAP_BOOL optional
-      !COPY type ABAP_BOOL optional
-      value(I_ANY) type ANY optional
-      value(I_ANY2) type ANY optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    preferred parameter I_ANY
-    exporting
-      value(E_RESULT) type ANY .
-  class-methods CONV
-    importing
-      value(I_ANY) type ANY
-      !IV_UNIT_INPUT type ANY optional
-      !IV_UNIT_RESULT type ANY optional
-      !IV_ROUND_DECI type I optional
-      !EXIT_IN type ABAP_BOOL default ABAP_FALSE
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    exporting
-      !R_RESULT type ANY .
-  class-methods MSG
-    importing
-      value(I_ANY) type ANY optional
-      value(IV_ID) type ANY optional
-      value(IV_NO) type ANY optional
-      value(IV_TYPE) type ANY optional
-      value(IV_V1) type ANY optional
-      value(IV_V2) type ANY optional
-      value(IV_V3) type ANY optional
-      value(IV_V4) type ANY optional
-      !USE_T100_ONLY type ABAP_BOOL default ABAP_FALSE
-      !IV_LANGU type ANY default SY-LANGU
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    preferred parameter I_ANY
-    exporting
-      !EV_ID type CLIKE
-      !EV_NO type ANY
-      !EV_TYPE type CLIKE
-      !EV_V1 type CLIKE
-      !EV_V2 type CLIKE
-      !EV_V3 type CLIKE
-      !EV_V4 type CLIKE
-      !EV_NOID type CLIKE
-      !EV_TYNOID type CLIKE
-      !E_ANY type ANY
-      !E_ANY_ADD type ANY
-      !ES_BAPI type BAPIRET2
-      !ET_BAPI type BAPIRET2_TAB .
-  class-methods DB_UPDATE
-    importing
-      !BAL type ABAP_BOOL optional
-      !VARI type ABAP_BOOL optional
-      !SO10 type ABAP_BOOL optional
-      !BAL_INDX type ABAP_BOOL optional
-      !ALL type ABAP_BOOL optional
-      !GOS type ABAP_BOOL optional
-      !I_ANY type ANY optional
-      !I_KEY1 type ANY optional
-      !I_KEY2 type ANY optional
-      !I_KEY3 type ANY optional
-      !I_KEY4 type ANY optional
-      !COMMIT type ABAP_BOOL default ABAP_FALSE
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE .
-  class-methods DB_READ
-    importing
-      !SO10 type ABAP_BOOL optional
-      !BAL type ABAP_BOOL optional
-      !VARI type ABAP_BOOL optional
-      !ALL type ABAP_BOOL optional
-      !GOS type ABAP_BOOL optional
-      !GOS_HEAD type ABAP_BOOL optional
-      !GOS_LIST type ABAP_BOOL optional
-      !I_KEY1 type ANY optional
-      !I_KEY2 type ANY optional
-      !I_KEY3 type ANY optional
-      !I_KEY4 type ANY optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    exporting
-      value(E_RESULT) type DATA .
-  class-methods DB_DELETE
-    importing
-      !SO10 type ABAP_BOOL optional
-      !BAL type ABAP_BOOL optional
-      !VARI type ABAP_BOOL optional
-      !ALL type ABAP_BOOL optional
-      !GOS type ABAP_BOOL optional
-      !GOS_HEAD type ABAP_BOOL optional
-      !GOS_LIST type ABAP_BOOL optional
-      !I_KEY1 type ANY optional
-      !I_KEY2 type ANY optional
-      !I_KEY3 type ANY optional
-      !I_KEY4 type ANY optional
-      !COMMIT type ABAP_BOOL optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE .
-  class-methods RAISE
-    importing
-      value(I_ANY) type ANY optional
-      value(I_HEAD) type ANY optional
-      value(I_PREV) type ANY optional
-      !I_CODE type ANY optional
-      !I_SER_VALUE type ANY optional
-      !I_SER_DATA type ANY optional
-      !I_ADD_T100 type ANY optional
-      !I_ADD_WRITE type ANY optional
-      !IV_DEPTH type I default 0
-      !RESUMABLE type ABAP_BOOL default ABAP_FALSE
-    preferred parameter I_ANY
-    returning
-      value(R_RESULT) type ref to CX_NO_CHECK .
-  class-methods RAISE_CHECK
-    importing
-      !READ_TABLE type ABAP_BOOL optional
-      !SELECT type ABAP_BOOL optional
-      !FUNCTION type ABAP_BOOL optional
-      !METHOD type ABAP_BOOL optional
-      !FOR_ALL_ENTRIES type ABAP_BOOL optional
-      !NOT_INITIAL type ABAP_BOOL optional
-      !SY_SUBRC type ABAP_BOOL optional
-      !SY_MSGTY type ABAP_BOOL optional
-      value(I_CHECK1) type ANY optional
-      value(I_CHECK2) type ANY optional
-      value(I_CHECK3) type ANY optional
-      !IS_SY type SY default SY
-      !I_FLAG type ANY optional
-      !IV_SUBRC type ANY optional
-      !I_VAL1 type ANY optional
-      !I_VAL2 type ANY optional
-      !I_VAL3 type ANY optional
-      !I_VAL4 type ANY optional
-      !I_CODE type ANY optional
-      !I_SER_VALUE type ANY optional
-      !I_SER_DATA type ANY optional
-      !I_ADD_T100 type ANY optional
-      !I_ADD_WRITE type ANY optional
-      value(I_HEAD) type ANY optional
-      value(I_PREV) type ANY optional
-      !RESUMABLE type ANY default ABAP_FALSE
-    returning
-      value(R_RESULT) type ref to CX_ROOT .
-  class-methods SCREEN
-    importing
-      !SELDATA_SET type ABAP_BOOL default ABAP_FALSE
-      !SELDATA_SET_VARI type ABAP_BOOL default ABAP_FALSE
-      !SELDATA_GET type ABAP_BOOL default ABAP_FALSE
-      !TITLE_SET type ABAP_BOOL default ABAP_FALSE
-      !STATUS_SET type ABAP_BOOL default ABAP_FALSE
-      !ELEM_SET_BY_DIRTY type ABAP_BOOL default ABAP_FALSE
-      !ELEM_SET_BY_VALUE type ABAP_BOOL default ABAP_FALSE
-      !ELEM_GET_BY_VALUE type ABAP_BOOL default ABAP_FALSE
-      !ELEM_ACTIVE type ABAP_BOOL default ABAP_FALSE
-      !ELEM_INACTIVE type ABAP_BOOL default ABAP_FALSE
-      !ELEM_INVISIBLE type ABAP_BOOL default ABAP_FALSE
-      !I_ANY type ANY optional
-      !I_ANY2 type ANY optional
-      !IV_REPID type ANY optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    exporting
-      !E_RESULT type ANY .
-  class-methods GUI
-    importing
-      !MESSAGE type ABAP_BOOL optional
-      !POPUP_T100_SIMPLE type ABAP_BOOL optional
-      !POPUP_T100 type ABAP_BOOL optional
-      !POPUP_PRINT type ABAP_BOOL optional
-      !POPUP_XML type ABAP_BOOL optional
-      !POPUP_JSON type ABAP_BOOL optional
-      !POPUP_JSON_DEEP type ABAP_BOOL optional
-      !POPUP_TAB type ABAP_BOOL optional
-      !POPUP_ERROR type ABAP_BOOL optional
-      !POPUP_CUST type ABAP_BOOL optional
-      !POPUP_BAL_TAB type ABAP_BOOL optional
-      !START_BAL type ABAP_BOOL optional
-      !START_TCODE type ABAP_BOOL optional
-      !START_BROWSER type ABAP_BOOL optional
-      !POPUP_ALV_VARI type ABAP_BOOL optional
-      !POPUP_SEL_VARI type ABAP_BOOL optional
-      !STATUS type ABAP_BOOL optional
-      !STATUS_PROGRESS type ABAP_BOOL optional
-      !POPUP_F4_HELP type ABAP_BOOL optional
-      !POPUP_F4_HELP_TAB type ABAP_BOOL optional
-      !POPUP_INFO type ABAP_BOOL optional
-      !POPUP_GET_VALUE type ABAP_BOOL optional
-      !POPUP_CONFIRM type ABAP_BOOL optional
-      !POPUP_RANGE type ABAP_BOOL optional
-      !POPUP_CHOOSE type ABAP_BOOL optional
-      !CALL_VIEW type ABAP_BOOL optional
-      !FILE_DOWNLOAD type ABAP_BOOL optional
-      !FILE_UPLOAD type ABAP_BOOL optional
-      !I_ANY type ANY optional
-      !I_ANY2 type ANY optional
-      !I_ANY3 type ANY optional
-      !I_ANY4 type ANY optional
-      !I_ANY5 type ANY optional
-      !I_ANY6 type ANY optional
-      !IV_TYPE type ANY optional
-      !IV_TITLE type ANY optional
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    preferred parameter I_ANY
-    exporting
-      !E_ANY type ANY
-      !EV_ANSWER type STRING .
-  class-methods POPUP
-    importing
-      !IT_TABLE type STANDARD TABLE
-      !IV_TITLE type CLIKE default SY-TITLE
-      !IV_VERTICAL_LINES type ABAP_BOOL default ABAP_TRUE
-      !IV_HEADERS_VISIBLE type ABAP_BOOL default ABAP_TRUE
-      !IV_RAISE_DOUBLE_CLICK type ABAP_BOOL default ABAP_TRUE
-      !IV_DEFAULT_TOOLBAR type ABAP_BOOL default ABAP_FALSE
-      !IT_ICON type STRINGTAB optional
-      !IT_RAISE_HOTSPOT type STRINGTAB optional
-      !IT_OUTLEN type NAME2STRINGVALUE_TABLE optional
-      !IT_TITLE type NAME2STRINGVALUE_TABLE optional
-      !IT_SORT type STRINGTAB optional
-      !IT_HIDE type STRINGTAB optional
-      !IV_OPTIMIZE_COLWIDTH type ABAP_BOOL default ABAP_FALSE
-      !IS_LAYOUT type DISVARIANT optional
-      !IV_LAYOUT_RESTRICTION type ANY optional
-      !IV_COL_START type ANY default '10'
-      !IV_COL_END type ANY default '160'
-      !IV_LINE_START type ANY default '1'
-      !IV_LINE_END type ANY default '25'
-      !IV_SEL type ANY optional
-      !IV_SEL_COL type ANY optional
-    exporting
-      !EV_EVENT_TYPE type STRING
-      !EV_EVENT_ROW type I
-      !EV_EVENT_COL type STRING
-      !EV_EVENT_VALUE type STRING
-      !ET_SELECTION type SALV_T_ROW
-      !ER_LINE type ref to DATA
-      !EV_UCOMM type STRING .
-  class-methods CX_INFO
-    importing
-      !IX_ROOT type ref to CX_ROOT
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    exporting
-      !EV_CODE type STRING
-      !ET_ADD_T100 type BAPIRET2_TAB
-      !EV_GUID type STRING
-      !ET_SOURCE type STRINGTAB
-      !ET_CALLSTACK type ABAP_CALLSTACK
-      !EV_VAL_PRINT type STRING
-      !ES_BAPIRET type BAPIRET2
-      !E_ADD_SERIAL type STRING .
-  methods LOG
-    importing
-      value(I_ANY) type ANY optional
-      value(IV_ID) type ANY optional
-      value(IV_NO) type ANY optional
-      value(IV_TYPE) type ANY optional
-      value(IV_V1) type ANY optional
-      value(IV_V2) type ANY optional
-      value(IV_V3) type ANY optional
-      value(IV_V4) type ANY optional
-      !USE_T100_ONLY type ABAP_BOOL default ABAP_FALSE
-      !IV_LANGU type ANY default SY-LANGU
-      !RAISE_ERROR type ABAP_BOOL default ABAP_FALSE
-    preferred parameter I_ANY
-    returning
-      value(R_RESULT) type TY-O_EASY_ABAP .
-  class-methods JSON
-    importing
-      !JSON_2 type ABAP_BOOL default ABAP_FALSE
-      !I_ANY type ANY optional
-      !I_ANY2 type ANY optional
-      !I_ANY3 type ANY optional
-      !I_ANY4 type ANY optional
-      !I_ANY5 type ANY optional
-      !IT_R_DATA type TY-T_REF_DATA optional
-      !IT_R_OBJECT type TY-T_REF_OBJ optional
-    exporting
-      !E_ANY1 type ANY
-      !E_ANY2 type ANY
-      !E_ANY3 type ANY
-      !E_ANY4 type ANY
-      !E_ANY5 type ANY
-      !E_REF1 type ANY
-      !E_TYPE1 type ANY
-      !E_KIND1 type ANY
-      !E_REF2 type ANY
-      !E_TYPE2 type ANY
-      !E_KIND2 type ANY
-      !E_REF3 type ANY
-      !E_TYPE3 type ANY
-      !E_KIND3 type ANY
-      !E_REF4 type ANY
-      !E_TYPE4 type ANY
-      !E_KIND4 type ANY
-      !E_REF5 type ANY
-      !E_TYPE5 type ANY
-      !E_KIND5 type ANY
-      !ET_R_DATA type TY-T_REF_DATA
-      !ET_R_OBJECT type TY-T_REF_OBJ .
-ENDCLASS.
+        o_easy_abap type ref to zcl_easy_abap,
+        t_ref_data  type standard table of ref to data with empty key,
+        t_ref_obj   type standard table of ref to object with empty key,
+        t_bal       type standard table of balm with empty key,
+        t_seqg3     type standard table of seqg3 with empty key,
 
 
+        begin of ty_s_col_setup,
+          name       type string,
+          is_tech    type abap_bool,
+          is_icon    type abap_bool,
+          is_hotspot type abap_bool,
+          is_button  type abap_bool,
+          out_length type string,
+          title      type string,
+          color      type string,
+        end of ty_s_col_setup,
 
-CLASS ZCL_easy_abap IMPLEMENTATION.
+        ty_t_setup  type standard table of ty-ty_s_col_setup with default key,
+
+        begin of  s_cx_data,
+          s_bapiret     type bapiret2,
+          s_callstack   type abap_callstack_line,
+          t_callstack   type abap_callstack,
+          t_source_code type string_table,
+          serial_value  type string,
+          add_serial    type string,
+          add_t100      type bapiret2_tab,
+          add_write     type string_table,
+          noid          type string,
+          s_sy          type sy,
+          timestampl    type timestampl,
+          guid          type string,
+          code          type string,
+        end of s_cx_data,
+
+        begin of s_msg,
+          s_balm   type balm,
+          s_bapi   type bapiret2,
+          t_bapi   type bapiret2_tab,
+          t_bal    type ty-t_bal,
+          text     type string,
+          noid     type string,
+          type     type string,
+          is_error type abap_bool,
+        end of s_msg,
+
+        begin of s_rtti,
+          handle       type ref to cl_abap_datadescr,
+          handle_struc type ref to cl_abap_datadescr,
+          handle_tab   type ref to cl_abap_datadescr,
+        end of s_rtti,
+
+        begin of s_info,
+          date         type d,
+          time         type t,
+          timestampl   type timestampl,
+          time_iso8601 type string,
+          user         type string,
+          log_info     type string,
+        end of s_info,
+
+      end of ty .
+
+    constants:
+      begin of cs,
+
+        begin of s_popup_answer,
+          exit type string value 'EXIT',
+          yes  type string value 'YES',
+          no   type string value 'NO',
+        end of s_popup_answer,
+
+        begin of s_alv_event_type,
+          double_click       type string value 'DOUBLE_CLICK',
+          hotspot_click      type string value 'HOTSPOT_CLICK' ##NO_TEXT,
+          toolbar_click      type string value 'TOOLBAR_CLICK',
+          popup_cancel       type string value 'POPUP_CANCEL',
+          popup_close        type string value 'POPUP_CLOSE',
+          after_data_changed type string value 'AFTER_DATA_CHANGED',
+          menu_button        type string value 'MENU_BUTTON',
+          f4_help            type string value 'F4_HELP',
+        end of s_alv_event_type,
+
+        begin of s_crud,
+          create type string value 'UPDATE',
+          read   type string value 'READ',
+          update type string value 'UPDATE',
+          delete type string value 'UPDATE',
+        end of s_crud,
+
+        begin of s_error_code,
+          user_exit     type string     value 'ZCX_USER_EXIT',
+          no_data       type string     value 'ZCX_NO_DATA',
+          input_invalid type string     value 'ZCX_INPUT_INVALID',
+        end of s_error_code,
+
+      end of cs .
+    data:
+      begin of ms,
+        t_log type bapiret2_tab,
+        t_bal type ty-t_bal,
+      end of ms.
+    class-data:
+      begin of ss_db_buffer,
+        t_t100       type hashed table of t100       with unique key sprsl arbgb msgnr,
+        t_dd04t      type hashed table of dd04t      with unique key rollname ddlanguage,
+        t_dd04l      type hashed table of dd04l      with unique key rollname,
+        t_dd01l      type hashed table of dd01l      with unique key domname,
+
+        t_kna1       type hashed table of kna1       with unique key kunnr,
+        t_lfa1       type hashed table of lfa1       with unique key lifnr,
+        t_makt       type hashed table of makt       with unique key spras matnr,
+        t_materialid type hashed table of materialid with unique key matnr_int,
+        t_mara       type hashed table of mara       with unique key matnr,
+        t_ihpa       type hashed table of ihpa       with unique key objnr parvw counter,
+        t_cslt       type hashed table of cslt       with unique key spras kokrs lstar,
+      end of ss_db_buffer .
+
+    class-methods get
+      importing
+        !conv_in         type abap_bool optional
+        !conv_out        type abap_bool optional
+        !print           type abap_bool optional
+        !print_deep      type abap_bool optional
+        !xml             type abap_bool optional
+        !json            type abap_bool optional
+        !json_deep       type abap_bool optional
+        !zip             type abap_bool optional
+        !unzip           type abap_bool optional
+        !trim_upper_case type abap_bool optional
+        !trim            type abap_bool optional
+        !param_user      type abap_bool optional
+        !param_system    type abap_bool optional
+        !param_id        type abap_bool optional
+        !print_date      type abap_bool optional
+        !print_time      type abap_bool optional
+        !msg_type        type abap_bool optional
+        !text            type abap_bool optional
+        !dd04t           type abap_bool optional
+        !guid16          type abap_bool optional
+        !rtti_kind       type abap_bool optional
+        !rtti_type       type abap_bool optional
+        !rtti_type_kind  type abap_bool optional
+        !rtti_type_super type abap_bool optional
+        !rtti_type_dynam type abap_bool optional
+        !rtti_type_line  type abap_bool optional
+        !popup_choose    type abap_bool optional
+        !popup_get_value type abap_bool optional
+        !methodname      type abap_bool optional
+        !hash            type abap_bool optional
+        !cx_code         type abap_bool optional
+        !i_any           type any optional
+        !i_any2          type any optional
+        !i_any3          type any optional
+        !i_any4          type any optional
+        !i_any5          type any optional
+        !iv_langu        type any default sy-langu
+        !raise_error     type abap_bool default abap_false
+        !log_info        type abap_bool optional
+      returning
+        value(r_result)  type string .
+    class-methods get_bus
+      importing
+        !vekp_exidv_by_venum            type abap_bool optional
+        !vekp_venum_by_exidv            type abap_bool optional
+        !makt_maktx_by_matnr            type abap_bool optional
+        !matnr_ext                      type abap_bool optional
+        !mara_meins_by_matnr            type abap_bool optional
+        !vbak_vbeln_by_likp_vorg        type abap_bool optional
+        !kna1_name1_by_kunnr            type abap_bool optional
+        !lfa1_name1_by_lifnr            type abap_bool optional
+        !vbpa_kunnr_by_vbeln_pos_parvw  type abap_bool optional
+        !ihpa_parnr_by_objnr_parvw      type abap_bool optional
+        !cslt_ltext_by_lang_kokrs_lstar type abap_bool optional
+        !dd02t_ddtext_by_tabname        type abap_bool optional
+        !dd04l_domname_by_rollname      type abap_bool optional
+        !dd04l_outputlen_by_rollname    type abap_bool optional
+        !dd04l_leng_by_rollname         type abap_bool optional
+        !dd01l_convexit_by_domname      type abap_bool optional
+        !dd04t_scrtext_by_rollname_leng type abap_bool optional
+        !t100_text_by_no_id             type abap_bool optional
+        !userdetail_info_by_pernr       type abap_bool optional
+        !tftit_stext_by_funcname        type abap_bool optional
+        !i_any                          type any optional
+        !i_any2                         type any optional
+        !i_any3                         type any optional
+        !iv_langu                       type any default sy-langu
+        !raise_error                    type abap_bool default abap_false
+        !conv_exit                      type abap_bool default abap_false
+        !refresh_memory                 type abap_bool default abap_false
+      returning
+        value(r_result)                 type string .
+    class-methods do
+      importing
+        !free_sy             type abap_bool optional
+        !commit_a_wait       type abap_bool optional
+        !rollback            type abap_bool optional
+        !email_send          type abap_bool optional
+        !idoc_send           type abap_bool optional
+        !raise_event         type abap_bool optional
+        !rfc_new_task        type abap_bool optional
+        !rfc_background_task type abap_bool optional
+        !rfc_parallel_task   type abap_bool optional
+        !amc_send            type abap_bool optional
+        !amc_receiver_list   type abap_bool optional
+        !http_req_set        type abap_bool optional
+        !http_req_get        type abap_bool optional
+        !report_start        type abap_bool optional
+        !init                type abap_bool optional
+        !init_cust           type abap_bool optional
+        !i_any               type any optional
+        !i_any2              type any optional
+        !i_any3              type any optional
+        !i_any5              type any optional
+        !raise_error         type abap_bool default abap_false
+      exporting
+        !e_any               type any .
+    class-methods info
+      importing
+        !iv_depth              type any optional
+        !raise_error           type abap_bool default abap_false
+      exporting
+        value(ev_date)         type d
+        value(ev_time)         type t
+        value(ev_timestampl)   type timestampl
+        value(ev_time_iso8601) type string
+        !ev_username           type string
+        !ev_ip_adress          type string
+        !ev_is_gui_active      type abap_bool
+        !ev_sy_msgtext         type string
+        !es_callstack          type abap_callstack_line
+        !et_callstack          type abap_callstack
+        !ev_repid              type string
+        !ev_method             type string
+        !et_dequeue_table      type ty-t_seqg3                      "wlf_seqg3_tab
+        !ev_work_process_id    type string
+        !et_source_code        type string_table
+        !ev_log_info           type string
+        !e_mock                type any
+      returning
+        value(r_result)        type ty-s_info .
+    class-methods check
+      importing
+        !tab_equal           type abap_bool optional
+        !syst                type abap_bool optional
+        !t100_error          type abap_bool optional
+        !t100_msg            type abap_bool optional
+        !value_in_struct     type abap_bool optional
+        !in_domrange         type abap_bool optional
+        !initial             type abap_bool optional
+        !bound               type abap_bool optional
+        !true                type abap_bool optional
+        !false               type abap_bool optional
+        !assigned            type abap_bool optional
+        !range_valid         type abap_bool optional
+        !field_exist         type abap_bool optional
+        !function_exist      type abap_bool optional
+        !lock_is_set         type abap_bool optional
+        !castable            type abap_bool optional
+        !convertible         type abap_bool optional
+        !rtti_type_kind_cseq type abap_bool optional
+        !value_in_tab        type abap_bool optional
+        !gui_active          type abap_bool optional
+        !popup_confirm       type abap_bool optional
+        value(i_any)         type any optional
+        value(i_any2)        type any optional
+        value(i_any3)        type any optional
+        value(i_any4)        type any optional
+        !raise_error         type abap_bool default abap_false
+        !iv_depth            type any default 0
+      returning
+        value(r_result)      type abap_bool .
+    class-methods itab
+      importing
+        !delete_duplicates  type abap_bool optional
+        !change_sequence    type abap_bool optional
+        !move_corresponding type abap_bool optional
+        !merge              type abap_bool optional
+        !raise_error        type abap_bool default abap_false
+      changing
+        !ct_tab             type standard table .
+    class-methods rtti
+      importing
+        !i_any                  type any optional
+        !iv_name                type any optional
+        !i_fnam_type            type any optional
+        !i_fnam_tab             type any optional
+        !iv_langu               type any default sy-langu
+        !raise_error            type abap_bool default abap_false
+          preferred parameter i_any
+      exporting
+        !ev_kind                type string
+        !ev_type                type string
+        !ev_type_is_ddic        type abap_bool
+        !ev_type_abap           type string
+        !ev_type_kind           type string
+        !ev_type_kind_is_c      type abap_bool
+        !ev_line_kind           type string
+        !ev_line_type           type string
+        !ev_line_type_kind      type string
+        !ev_line_type_kind_is_c type abap_bool
+        !ev_line_type_is_ddic   type abap_bool
+        !ev_table_type          type string
+        !ev_ref_dyn             type string
+        !ev_ref_stat            type string
+        !ev_ref_super           type string
+        !et_ref_super           type string_table
+        !et_comp                type abap_component_tab
+        !ev_domname             type string
+        !et_domrange            type standard table
+        !ev_convexit            type clike
+        !ev_in_domr             type abap_bool
+        !ev_fieldname           type clike
+        !ev_typedescr           type clike
+        !ev_outputlen           type i
+        !ev_length              type i
+        !eo_handle              type ref to cl_abap_datadescr
+      returning
+        value(r_result)         type ty-s_rtti .
+    class-methods trans
+      importing
+        !id                 type abap_bool optional
+        !xml                type abap_bool optional
+        !json               type abap_bool optional
+        !print              type abap_bool optional
+        !zip                type abap_bool optional
+        !unzip              type abap_bool optional
+        !tab_2_tab          type abap_bool optional
+        !xml_2              type abap_bool optional
+        !json_2             type abap_bool optional
+        !value_2_range      type abap_bool optional
+        !xml_2_itab         type abap_bool optional
+        !rangetab_2_where   type abap_bool optional
+        !params_2_struct    type abap_bool optional
+        !value_2_rangetab   type abap_bool optional
+        !string_2_stringtab type abap_bool optional
+        !split_word         type abap_bool optional
+        !copy               type abap_bool optional
+        value(i_any)        type any optional
+        value(i_any2)       type any optional
+        !raise_error        type abap_bool default abap_false
+          preferred parameter i_any
+      exporting
+        value(e_result)     type any .
+    class-methods conv
+      importing
+        value(i_any)    type any
+        !iv_unit_input  type any optional
+        !iv_unit_result type any optional
+        !iv_round_deci  type i optional
+        !exit_in        type abap_bool default abap_false
+        !raise_error    type abap_bool default abap_false
+      exporting
+        !r_result       type any .
+    class-methods msg
+      importing
+        value(i_any)    type any optional
+        value(i_id)     type any optional
+        value(i_no)     type any optional
+        value(i_type)   type any optional
+        value(i_v1)     type any optional
+        value(i_v2)     type any optional
+        value(i_v3)     type any optional
+        value(i_v4)     type any optional
+        !use_t100_only  type abap_bool default abap_false
+        !i_langu        type any default sy-langu
+        !raise_error    type abap_bool default abap_false
+          preferred parameter i_any
+      exporting
+        !e_any          type any
+        !e_any_add      type any
+      returning
+        value(r_result) type ty-s_msg .
+    "!
+    "! @parameter crud | Welche Prozedur soll druchgeführt werden
+    "! @parameter so10 |
+    "! @parameter bal |
+    "! @parameter bal_list |
+    "! @parameter vari |
+    "! @parameter all |
+    "! @parameter gos_list |
+    "! @parameter gos_head |
+    "! @parameter gos_content |
+    "! @parameter i_key1 |
+    "! @parameter i_key2 |
+    "! @parameter i_key3 |
+    "! @parameter i_key4 |
+    "! @parameter raise_error |
+    "! @parameter e_result |
+    class-methods service
+      importing
+        !crud           type string
+        !all            type abap_bool optional
+        !so10           type abap_bool optional
+        !bal            type abap_bool optional
+        !bal_list       type abap_bool optional
+        !vari           type abap_bool optional
+        !gos_list       type abap_bool optional
+        !gos_head       type abap_bool optional
+        !gos_content    type abap_bool optional
+        !file           type abap_bool optional
+        !i_key1         type any optional
+        !i_key2         type any optional
+        !i_key3         type any optional
+        !i_key4         type any optional
+        !i_any          type any optional
+        !i_any2         type any optional
+        !commit         type abap_bool default abap_false
+        !raise_error    type abap_bool default abap_false
+      exporting
+        value(e_result) type data .
+    class-methods x_raise
+      importing
+        value(i_any)    type any optional
+        value(i_head)   type any optional
+        value(i_prev)   type any optional
+        !i_code         type any optional
+        !i_ser_value    type any optional
+        !i_ser_data     type any optional
+        !i_add_t100     type any optional
+        !i_add_write    type any optional
+        !iv_depth       type i default 0
+        !resumable      type abap_bool default abap_false
+          preferred parameter i_any
+      returning
+        value(r_result) type ref to cx_no_check .
+    class-methods x_raise_check
+      importing
+        !read_table      type abap_bool optional
+        !select          type abap_bool optional
+        !function        type abap_bool optional
+        !method          type abap_bool optional
+        !for_all_entries type abap_bool optional
+        !not_initial     type abap_bool optional
+        !msg_not_error   type abap_bool optional
+        !sy_subrc        type abap_bool optional
+        !sy_msgty        type abap_bool optional
+        value(i_check1)  type any optional
+        value(i_check2)  type any optional
+        value(i_check3)  type any optional
+        !is_sy           type sy default sy
+        !i_flag          type any optional
+        !iv_subrc        type any optional
+        !i_val1          type any optional
+        !i_val2          type any optional
+        !i_val3          type any optional
+        !i_val4          type any optional
+        !i_code          type any optional
+        !i_ser_value     type any optional
+        !i_ser_data      type any optional
+        !i_add_t100      type any optional
+        !i_add_write     type any optional
+        value(i_head)    type any optional
+        value(i_prev)    type any optional
+        !resumable       type any default abap_false
+      returning
+        value(r_result)  type ref to cx_root .
+    class-methods x_info
+      importing
+        !ix_root        type ref to cx_root
+        !raise_error    type abap_bool default abap_false
+      exporting
+        !ev_code        type string
+        !et_add_t100    type bapiret2_tab
+        !ev_guid        type string
+        !et_source      type string_table
+        !et_callstack   type abap_callstack
+        !ev_val_print   type string
+        !es_bapiret     type bapiret2
+        !e_add_serial   type string
+        !es_data        type ty-s_cx_data
+      returning
+        value(r_result) type ty-s_cx_data .
+    class-methods gui_popup
+      importing
+        !msg_error        type abap_bool optional
+        !msg_warning      type abap_bool optional
+        !msg_success      type abap_bool optional
+        !msg_info         type abap_bool optional
+        !msg              type abap_bool optional
+        !t100             type abap_bool optional
+        !t100_ext         type abap_bool optional
+        !print            type abap_bool optional
+        !xml              type abap_bool optional
+        !json             type abap_bool optional
+        !json_deep        type abap_bool optional
+        !tab              type abap_bool optional
+        !exception        type abap_bool optional
+        !cust             type abap_bool optional
+        !balm             type abap_bool optional
+        !balm_list        type abap_bool optional
+        !selbild          type abap_bool optional
+        !f4_help          type abap_bool optional
+        !f4_help_tab      type abap_bool optional
+        !get_value        type abap_bool optional
+        !confirm          type abap_bool optional
+        !range            type abap_bool optional
+        !choose           type abap_bool optional
+        !vari_alv         type abap_bool optional
+        !vari_sel         type abap_bool optional
+        !selscreen_dyn    type abap_bool optional
+        !file_download    type abap_bool optional
+        !file_upload      type abap_bool optional
+        !start_se16n_edit type abap_bool optional
+        !start_bal        type abap_bool optional
+        !start_tcode      type abap_bool optional
+        !start_browser    type abap_bool optional
+        !call_view        type abap_bool optional
+        !get_screenshot   type abap_bool optional
+        !i_any            type any optional
+        !i_any2           type any optional
+        !i_any3           type any optional
+        !i_any4           type any optional
+        !i_any5           type any optional
+        !i_any6           type any optional
+        !iv_type          type any optional
+        !iv_title         type any optional
+        !raise_error      type abap_bool default abap_false
+          preferred parameter i_any
+      exporting
+        !e_any            type any
+        !ev_answer        type string .
+    class-methods gui_popup_gen
+      importing
+        !it_table              type standard table
+        !iv_title              type clike default sy-title
+        !iv_vertical_lines     type abap_bool default abap_true
+        !iv_headers_visible    type abap_bool default abap_true
+        !iv_raise_double_click type abap_bool default abap_true
+        !iv_default_toolbar    type abap_bool default abap_false
+        !it_icon               type string_table optional
+        !it_raise_hotspot      type string_table optional
+        !it_outlen             type name2stringvalue_table optional
+        !it_title              type name2stringvalue_table optional
+        !it_sort               type string_table optional
+        !it_hide               type string_table optional
+        !it_col_setting        type ty-ty_t_setup optional
+        !iv_optimize_colwidth  type abap_bool default abap_false
+        !is_layout             type disvariant optional
+        !iv_layout_restriction type any optional
+        !iv_col_start          type any default '10'
+        !iv_col_end            type any default '160'
+        !iv_line_start         type any default '1'
+        !iv_line_end           type any default '25'
+        !iv_sel                type any optional
+        !iv_sel_col            type any optional
+        !raise_error           type abap_bool default abap_false
+      exporting
+        !ev_event_type         type string
+        !ev_event_row          type i
+        !ev_event_col          type string
+        !ev_event_value        type string
+        !et_selection          type salv_t_row
+        !er_line               type data
+        !ev_ucomm              type string .
+    class-methods gui_cfw
+      importing
+        !get_fcat            type abap_bool default abap_false
+        !do_suppress_toolbar type abap_bool default abap_false
+        !i_any               type any optional
+        !raise_error         type abap_bool default abap_false
+      exporting
+        !e_any               type any .
+    class-methods gui_screen
+      importing
+        !seldata_set       type abap_bool default abap_false
+        !seldata_set_vari  type abap_bool default abap_false
+        !seldata_get       type abap_bool default abap_false
+        !title_set         type abap_bool default abap_false
+        !status            type abap_bool optional
+        !status_progress   type abap_bool optional
+        !status_set        type abap_bool default abap_false
+        !elem_set_by_dirty type abap_bool default abap_false
+        !elem_set_by_value type abap_bool default abap_false
+        !elem_get_by_value type abap_bool default abap_false
+        !elem_active       type abap_bool default abap_false
+        !elem_inactive     type abap_bool default abap_false
+        !elem_invisible    type abap_bool default abap_false
+        !elem_intensify    type abap_bool default abap_false
+        !i_any             type any optional
+        !i_any2            type any optional
+        !iv_repid          type any optional
+        !raise_error       type abap_bool default abap_false
+      exporting
+        !e_result          type any .
+    class-methods json
+      importing
+        !json_2      type abap_bool default abap_false
+        !i_any       type any optional
+        !i_any2      type any optional
+        !i_any3      type any optional
+        !i_any4      type any optional
+        !i_any5      type any optional
+        !it_r_data   type ty-t_ref_data optional
+        !it_r_object type ty-t_ref_obj optional
+        !raise_error type abap_bool default abap_false
+      exporting
+        !e_any1      type any
+        !e_any2      type any
+        !e_any3      type any
+        !e_any4      type any
+        !e_any5      type any
+        !e_ref1      type any
+        !e_type1     type any
+        !e_kind1     type any
+        !e_ref2      type any
+        !e_type2     type any
+        !e_kind2     type any
+        !e_ref3      type any
+        !e_type3     type any
+        !e_kind3     type any
+        !e_ref4      type any
+        !e_type4     type any
+        !e_kind4     type any
+        !e_ref5      type any
+        !e_type5     type any
+        !e_kind5     type any
+        !et_r_data   type ty-t_ref_data
+        !et_r_object type ty-t_ref_obj .
+    methods log
+      importing
+        value(i_any)    type any optional
+        value(i_id)     type any optional
+        value(i_no)     type any optional
+        value(i_type)   type any optional
+        value(i_v1)     type any optional
+        value(i_v2)     type any optional
+        value(i_v3)     type any optional
+        value(i_v4)     type any optional
+        !use_t100_only  type abap_bool default abap_false
+        !i_langu        type any default sy-langu
+        !raise_error    type abap_bool default abap_false
+          preferred parameter i_any
+      returning
+        value(r_result) type ty-o_easy_abap .
+endclass.
 
 
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>CFW
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] GET_FCAT                       TYPE        ABAP_BOOL(optional)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] E_ANY                          TYPE        ANY
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD cfw.
 
-try.
-
-    case abaP_true.
-
-        when get_fcat.
-
-            data lt_fcat type lvc_t_fcat.
-
-          lt_fcat = lcl_help=>cfw_get_fcat( it_table = i_any  ).
-          e_any = lt_fcat.
+class zcl_034tmm_easy_abap_01 implementation.
 
 
-
-
-endcase.
-
-
-
-        DATA lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error( ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>CHECK
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] TAB_EQUAL                      TYPE        ABAP_BOOL(optional)
-* | [--->] SYST                           TYPE        ABAP_BOOL(optional)
-* | [--->] T100_ERROR                     TYPE        ABAP_BOOL(optional)
-* | [--->] T100_MSG                       TYPE        ABAP_BOOL(optional)
-* | [--->] VALUE_IN_STRUCT                TYPE        ABAP_BOOL(optional)
-* | [--->] IN_DOMRANGE                    TYPE        ABAP_BOOL(optional)
-* | [--->] INITIAL                        TYPE        ABAP_BOOL(optional)
-* | [--->] BOUND                          TYPE        ABAP_BOOL(optional)
-* | [--->] TRUE                           TYPE        ABAP_BOOL(optional)
-* | [--->] FALSE                          TYPE        ABAP_BOOL(optional)
-* | [--->] ASSIGNED                       TYPE        ABAP_BOOL(optional)
-* | [--->] RANGE_VALID                    TYPE        ABAP_BOOL(optional)
-* | [--->] FIELD_EXIST                    TYPE        ABAP_BOOL(optional)
-* | [--->] FUNCTION_EXIST                 TYPE        ABAP_BOOL(optional)
-* | [--->] LOCK_IS_SET                    TYPE        ABAP_BOOL(optional)
-* | [--->] CASTABLE                       TYPE        ABAP_BOOL(optional)
-* | [--->] CONVERTIBLE                    TYPE        ABAP_BOOL(optional)
-* | [--->] RTTI_TYPE_KIND_CSEQ            TYPE        ABAP_BOOL(optional)
-* | [--->] VALUE_IN_TAB                   TYPE        ABAP_BOOL(optional)
-* | [--->] GUI_ACTIVE                     TYPE        ABAP_BOOL(optional)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_ANY2                         TYPE        ANY(optional)
-* | [--->] I_ANY3                         TYPE        ANY(optional)
-* | [--->] I_ANY4                         TYPE        ANY(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] IV_DEPTH                       TYPE        ANY (default =0)
-* | [<-()] R_RESULT                       TYPE        ABAP_BOOL
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD check.
+  method check.
 
     "Sammlung diverser Checks
     "Bsp Message Type, Werte in Range, Tabellen gleich usw
-    TRY.
-        CASE abap_true.
+    try.
+        case abap_true.
 
-          WHEN in_domrange.
+          when popup_confirm.
+            data lv_answer type string.
+            gui_popup(
+              exporting
+                confirm     = 'X'
+                i_any             = i_any
+              importing
+*            e_any             =
+                ev_answer         = lv_answer
+            ).
+
+            case lv_answer.
+              when cs-s_popup_answer-yes.
+                r_result = abap_true.
+            endcase.
+
+          when in_domrange.
 
             r_result = lcl_help=>rtts_is_in_domrange( iv_any = i_any ).
 
 
-          WHEN tab_equal.
+          when tab_equal.
 
-            DATA(lv_tab1_json) = get( json = 'X' i_any = i_any ).
-            DATA(lv_tab2_json) = get( json = 'X' i_any = i_any2 ).
-            IF lv_tab1_json = lv_tab2_json.
+            data(lv_tab1_json) = get( json = 'X' i_any = i_any ).
+            data(lv_tab2_json) = get( json = 'X' i_any = i_any2 ).
+            if lv_tab1_json = lv_tab2_json.
               r_result = abap_true.
-            ELSE.
+            else.
               r_result = abap_false.
-            ENDIF.
+            endif.
 
 
-          WHEN range_valid.
+          when range_valid.
 
             r_result = lcl_help=>is_range_valid( i_any = i_any ).
 
 
-          WHEN gui_active.
+          when gui_active.
 
-            info( IMPORTING ev_is_gui_active = r_result ).
-
-
-          WHEN rtti_type_kind_cseq.
-
-            rtti( EXPORTING i_any = i_any
-                  IMPORTING ev_type_kind_is_c = r_result  ).
+            info( importing ev_is_gui_active = r_result ).
 
 
-          WHEN value_in_tab.
+          when rtti_type_kind_cseq.
 
-            FIELD-SYMBOLS:  <lt_table> TYPE STANDARD TABLE.
-            FIELD-SYMBOLS:   <l_any>    TYPE any.
-            FIELD-SYMBOLS:  <l_value>  TYPE any.
+            rtti( exporting i_any = i_any
+                  importing ev_type_kind_is_c = r_result  ).
+
+
+          when value_in_tab.
+
+            field-symbols: <lt_table> type standard table.
+            field-symbols: <l_any>    type any.
+            field-symbols: <l_value>  type any.
 
             "prÃ¼ft ob der wert i_any3
             "in der tabelle i_any mit Spalte i_any2 vorhanden ist
 
-            ASSIGN i_any TO <lt_table>.
-            LOOP AT <lt_table> ASSIGNING <l_any>.
-              IF i_any2 = 'TABLE_LINE'.
-                ASSIGN <l_any> TO <l_value>.
-              ELSE.
-                ASSIGN COMPONENT i_any2 OF STRUCTURE <l_any> TO <l_value>.
-              ENDIF.
-              IF <l_value> = i_any3.
+            assign i_any to <lt_table>.
+            loop at <lt_table> assigning <l_any>.
+              if i_any2 = 'TABLE_LINE'.
+                assign <l_any> to <l_value>.
+              else.
+                assign component i_any2 of structure <l_any> to <l_value>.
+              endif.
+              if <l_value> = i_any3.
                 r_result = abap_true.
-                RETURN.
-              ENDIF.
-            ENDLOOP.
+                return.
+              endif.
+            endloop.
 
-          WHEN syst.
+          when syst.
 
-            DATA ls_sy TYPE sy.
+            data ls_sy type sy.
             ls_sy = i_any.
-            IF ls_sy-subrc <> 0 OR ls_sy-msgty = 'E'.
+            if ls_sy-subrc <> 0 or ls_sy-msgty = 'E'.
               r_result = abap_false.
-            ELSE.
+            else.
               r_result = abap_true.
-            ENDIF.
+            endif.
 
-          WHEN t100_msg.
+          when t100_msg.
 
-            DATA lv_id_check TYPE string.
-
-            msg(
-              EXPORTING
-                i_any         = i_any
-                use_t100_only = abap_true
-              IMPORTING
-                ev_id         = lv_id_check ).
-            IF lv_id_check IS INITIAL.
+            data(ls_bapi) = msg( i_any = i_any use_t100_only = abap_true )-s_bapi.
+            if ls_bapi-id is initial.
               r_result = abap_false.
-            ELSE.
+            else.
               r_result = abap_true.
-            ENDIF.
+            endif.
 
-          WHEN convertible.
+          when convertible.
 
-            IF get( rtti_kind = 'X' i_any = i_any ) = get( rtti_kind = 'X' i_any = i_any2 ).
+            if get( rtti_kind = 'X' i_any = i_any ) = get( rtti_kind = 'X' i_any = i_any2 ).
               r_result = abap_true.
-            ENDIF.
+            endif.
 
 
-          WHEN castable.
+          when castable.
 
             "PrÃ¼ft ob Referenz i_any2 auf Referenz vom Typ mit Namen i_any gecastet werden kannn
             rtti(
-              EXPORTING
+              exporting
                 i_any                = i_any
-              IMPORTING
-                ev_type              = DATA(lv_classname_any1)
-                ev_type_kind_is_c    = DATA(lv_is_c)
-                et_ref_super         = DATA(lt_ref_super_any1) ).
+              importing
+                ev_type              = data(lv_classname_any1)
+                ev_type_kind_is_c    = data(lv_is_c)
+                et_ref_super         = data(lt_ref_super_any1) ).
 
-            IF lt_ref_super_any1 IS INITIAL AND lv_is_c = abap_true.
-              rtti( EXPORTING iv_name = i_any
-                   IMPORTING ev_type = lv_classname_any1 et_ref_super = lt_ref_super_any1 ).
+            if lt_ref_super_any1 is initial and lv_is_c = abap_true.
+              rtti( exporting iv_name = i_any
+                   importing ev_type = lv_classname_any1 et_ref_super = lt_ref_super_any1 ).
 
-            ELSEIF lt_ref_super_any1 IS INITIAL.
-              raise('WRONG_TYPE_OF_INPUT').
-            ENDIF.
+            elseif lt_ref_super_any1 is initial.
+              x_raise('WRONG_TYPE_OF_INPUT').
+            endif.
 
             rtti(
-              EXPORTING
+              exporting
                 i_any                = i_any2
-              IMPORTING
-              ev_type   = DATA(lv_classname_any2)
+              importing
+              ev_type   = data(lv_classname_any2)
                 ev_type_kind_is_c    = lv_is_c
-                et_ref_super         = DATA(lt_ref_super_any2) ).
+                et_ref_super         = data(lt_ref_super_any2) ).
 
-            IF lt_ref_super_any2 IS INITIAL AND lv_is_c = abap_true.
-              rtti( EXPORTING iv_name = i_any2
-                    IMPORTING et_ref_super = lt_ref_super_any2 ).
-            ELSEIF lt_ref_super_any2 IS INITIAL.
-              raise('WRONG_TYPE_OF_INPUT').
-            ENDIF.
+            if lt_ref_super_any2 is initial and lv_is_c = abap_true.
+              rtti( exporting iv_name = i_any2
+                    importing et_ref_super = lt_ref_super_any2 ).
+            elseif lt_ref_super_any2 is initial.
+              x_raise('WRONG_TYPE_OF_INPUT').
+            endif.
 
             r_result = check( value_in_tab = 'X' i_any = lt_ref_super_any2
                               i_any2 = 'TABLE_LINE' i_any3 = lv_classname_any1 ).
 
 
-          WHEN t100_error.
+          when t100_error.
 
-            DATA: lv_type TYPE string.
+            data: lv_type type string.
 
-            msg(
-              EXPORTING
-                i_any           = i_any
-                use_t100_only = abap_true
-              IMPORTING
-                ev_type   = lv_type ).
+            lv_type = msg( i_any = i_any use_t100_only = abap_true )-type.
 
-            IF lv_type = 'E' OR lv_type = 'A'.
+            if lv_type = 'E' or lv_type = 'A'.
               r_result = abap_true.
-            ELSE.
+            else.
               r_result = abap_false.
-            ENDIF.
+            endif.
 
-            RETURN.
-
-
-          WHEN value_in_struct.
+            return.
 
 
-            DO.
-              ASSIGN COMPONENT sy-index OF STRUCTURE i_any2
-                  TO <l_any>.
-              IF sy-subrc <> 0.
-                EXIT.
-              ENDIF.
+          when value_in_struct.
 
-              IF <l_any> = i_any.
+
+            do.
+              assign component sy-index of structure i_any2
+                  to <l_any>.
+              if sy-subrc <> 0.
+                exit.
+              endif.
+
+              if <l_any> = i_any.
                 r_result = abap_true.
-                EXIT.
-              ENDIF.
-            ENDDO.
+                exit.
+              endif.
+            enddo.
 
-            RETURN.
+            return.
 
-          WHEN function_exist.
+          when function_exist.
 
-            DATA funcname  TYPE rs38l_fnam .
+            data funcname  type rs38l_fnam .
             funcname = i_any.
 
-            CALL FUNCTION 'FUNCTION_EXISTS'
-              EXPORTING
+            call function 'FUNCTION_EXISTS'
+              exporting
                 funcname           = funcname    " Name des Funktionsbausteins
 *           importing
 *               group              =     " Name der Funktionsgruppe
 *               include            =     " Name des Includes
 *               namespace          =     " Namensraum
 *               str_area           =     " Name der Funktionsgruppe ohne Namensraum
-              EXCEPTIONS
+              exceptions
                 function_not_exist = 1
-                OTHERS             = 2.
-            IF sy-subrc <> 0.
+                others             = 2.
+            if sy-subrc <> 0.
               r_result = abap_false.
-            ELSE.
+            else.
               r_result = abap_true.
-            ENDIF.
+            endif.
 
-          WHEN lock_is_set. " = abap_true.
+          when lock_is_set. " = abap_true.
+*
+            data: lv_any  type string, lv_any2 type string, lv_any3 type string, lv_any4 type string.
 
-            lock(
-              EXPORTING is_set = 'X'
-                i_any        = i_any
-                i_any2       = i_any2
-                i_any3       = i_any3
-                i_any4       = i_any4
-                raise_error  = abap_true
-              IMPORTING
-                ev_is_set    = r_result ).
+            lv_any  = i_any.
+            lv_any2 = i_any2.
+            lv_any3 = i_any3.
+            lv_any4 = i_any4.
 
-          WHEN OTHERS.
-            raise('WRONG_CALL_OF_METHOD').
-        ENDCASE.
+*            lcl_help=>lock_is_set(
+*              exporting
+*                iv_val    = lv_any
+*                iv_val2   = lv_any2
+*                iv_val3   = lv_any3
+*                iv_val4   = lv_any4
+*                iv_lock   = i_object
+*                iv_unam   = iv_uname
+*              receiving
+*                rv_result = ev_is_set
+*            ).
+
+          when others.
+            x_raise('WRONG_CALL_OF_METHOD').
+        endcase.
 
 
         """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " error handling
 
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
+        data: lx_root type ref to cx_root.
+      catch cx_root into lx_root.
+        lcl_help=>handle_error( ix_root = lx_root raise_error = raise_error ).
+    endtry.
 
-  ENDMETHOD.
+  endmethod.
 
 
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>CONV
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] I_ANY                          TYPE        ANY
-* | [--->] IV_UNIT_INPUT                  TYPE        ANY(optional)
-* | [--->] IV_UNIT_RESULT                 TYPE        ANY(optional)
-* | [--->] IV_ROUND_DECI                  TYPE        I(optional)
-* | [--->] EXIT_IN                        TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] R_RESULT                       TYPE        ANY
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD conv.
+  method conv.
 
     "Durchführen von Konvertierungen
     "Bsp Char->INT, Rundungen, Sprachabkürzungen usw
-    TRY.
-        FREE r_result.
+    try.
+        clear r_result.
 
         """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " Typen bestimmen
 
-        DATA:
-          lv_type_in       TYPE string,
-          lv_type_out      TYPE string,
-          lv_type_kind_in  TYPE string,
-          lv_type_kind_out TYPE string.
+        data:
+          lv_type_in       type string,
+          lv_type_out      type string,
+          lv_type_kind_in  type string,
+          lv_type_kind_out type string.
 
         rtti(
-          EXPORTING
+          exporting
             i_any         = i_any
-          IMPORTING
+          importing
             ev_type       = lv_type_in
             ev_type_kind  = lv_type_kind_in ).
 
         rtti(
-          EXPORTING
+          exporting
             i_any         = r_result
-          IMPORTING
+          importing
             ev_type       = lv_type_out
             ev_type_kind  = lv_type_kind_out ).
 
@@ -951,199 +922,218 @@ endcase.
         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " Sonderbehandlungen / Rundung
 
-        IF  iv_unit_input IS SUPPLIED AND iv_unit_result IS SUPPLIED
-            AND iv_unit_input <> iv_unit_result.
+        if lv_type_in = 'TIMESTAMPL' and  lv_type_kind_out = 'D'.
+          convert time stamp i_any
+          time zone sy-zonlo
+          into date r_result.
+*          time ev_time.
+          return.
+        endif.
 
-          DATA lv_p_16 TYPE p LENGTH 16 DECIMALS 6.
+        if lv_type_in = 'TIMESTAMPL' and  lv_type_kind_out = 'T'.
+          convert time stamp i_any
+          time zone sy-zonlo
+          into date data(lv_dummy4)
+          time r_result.
+          return.
+        endif.
 
-          lcl_help=>conv_unit( EXPORTING i_any = i_any
+        if  iv_unit_input is supplied and iv_unit_result is supplied
+            and iv_unit_input <> iv_unit_result.
+
+          data lv_p_16 type p length 16 decimals 6.
+
+          lcl_help=>conv_unit( exporting i_any = i_any
                   i_unit_in = iv_unit_input   i_unit_out = iv_unit_result
-                  IMPORTING
+                  importing
                       e_result = lv_p_16 ).
 
-          IF iv_round_deci IS SUPPLIED.
+          if iv_round_deci is supplied.
             conv(
-              EXPORTING
+              exporting
                 i_any          = lv_p_16
                 iv_round_deci  = iv_round_deci
                 raise_error    = raise_error
-              IMPORTING
+              importing
                 r_result       = r_result ).
 
-          ELSE.
+          else.
 
             conv(
-        EXPORTING
+        exporting
           i_any          = lv_p_16
 *              iv_round_deci  = iv_round_deci
           raise_error    = raise_error
-        IMPORTING
+        importing
           r_result       = r_result ).
 
-          ENDIF.
+          endif.
 
-          RETURN.
+          return.
 
-        ENDIF.
+        endif.
 
 
-        IF iv_round_deci IS SUPPLIED.
+        if iv_round_deci is supplied.
 
-          lcl_help=>round2( EXPORTING i_any = i_any iv_decimals = iv_round_deci
-                                 IMPORTING e_result = r_result ).
+          lcl_help=>round2( exporting i_any = i_any iv_decimals = iv_round_deci
+                                 importing e_result = r_result ).
 
-          RETURN.
+          return.
 
-        ENDIF.
+        endif.
 
 
         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " spezielle Konvertierungen
 
-        IF lv_type_in = 'LANGU' OR lv_type_in = 'SPRAS' OR lv_type_in = 'SYST_LANGU'
-        AND lv_type_out = 'LAISO'.
+        if lv_type_in = 'LANGU' or lv_type_in = 'SPRAS' or lv_type_in = 'SYST_LANGU'
+        and lv_type_out = 'LAISO'.
 
-          CALL FUNCTION 'CONVERT_SAP_LANG_TO_ISO_LANG'
-            EXPORTING
+          call function 'CONVERT_SAP_LANG_TO_ISO_LANG'
+            exporting
               input            = i_any
-            IMPORTING
+            importing
               output           = r_result
-            EXCEPTIONS
+            exceptions
               unknown_language = 1
               error_message    = 2
-              OTHERS           = 3.
-          IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-          raise_check( function = 'X' ).
+              others           = 3.
+          if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+          x_raise_check( function = 'X' ).
 
-          RETURN.
-        ENDIF.
+          return.
+        endif.
 
 
-        IF lv_type_in = 'LAISO'
-        AND lv_type_out = 'LANGU' OR lv_type_out = 'SPRAS' OR lv_type_out = 'SYST_LANGU'.
+        if lv_type_in = 'LAISO'
+        and lv_type_out = 'LANGU' or lv_type_out = 'SPRAS' or lv_type_out = 'SYST_LANGU'.
 
-          CALL FUNCTION 'CONVERSION_EXIT_ISOLA_INPUT'
-            EXPORTING
+          call function 'CONVERSION_EXIT_ISOLA_INPUT'
+            exporting
               input            = i_any
-            IMPORTING
+            importing
               output           = r_result
-            EXCEPTIONS
+            exceptions
               unknown_language = 1
               error_message    = 2
-              OTHERS           = 3.
-          IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-          raise_check( function = 'X' ).
+              others           = 3.
+          if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+          x_raise_check( function = 'X' ).
 
-          RETURN.
-        ENDIF.
+          return.
+        endif.
 
 
         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " Generelle Konvertierungen
 
-        DATA lv_c_500 TYPE c LENGTH 500.
+        data lv_c_500 type c length 500.
 
-        CASE lv_type_kind_out.
+        case lv_type_kind_out.
 
-          WHEN cl_abap_typedescr=>typekind_packed.
+          when cl_abap_typedescr=>typekind_packed.
 
-            CASE lv_type_kind_in.
+            case lv_type_kind_in.
 
-              WHEN cl_abap_typedescr=>typekind_int
-                OR cl_abap_typedescr=>typekind_int1
-                OR cl_abap_typedescr=>typekind_int2
-                OR cl_abap_typedescr=>typekind_packed.
+              when cl_abap_typedescr=>typekind_int
+                or cl_abap_typedescr=>typekind_int1
+                or cl_abap_typedescr=>typekind_int2
+                or cl_abap_typedescr=>typekind_packed.
 
                 r_result = i_any.
 
 
-              WHEN cl_abap_typedescr=>typekind_string.
+              when cl_abap_typedescr=>typekind_string.
 
 *              data lv_c type c length 500.
-                FREE lv_c_500.
+                clear lv_c_500.
                 lv_c_500 = get( trim = 'X' i_any = i_any ).
 
-                conv( EXPORTING i_any    = lv_c_500
-                      IMPORTING r_result = r_result ).
+                conv( exporting i_any    = lv_c_500
+                      importing r_result = r_result ).
 
-                RETURN.
+                return.
 
-              WHEN cl_abap_typedescr=>typekind_char
+              when cl_abap_typedescr=>typekind_char
 
-               OR cl_abap_typedescr=>typekind_num.
-**
-*                REPLACE ALL OCCURRENCES OF ',' IN i_any WITH '.'.
+               or cl_abap_typedescr=>typekind_num.
 
+                try.
+                    r_result = i_any.
 
-                CALL FUNCTION 'MOVE_CHAR_TO_NUM'
-                  EXPORTING
-                    chr             = i_any
-                  IMPORTING
-                    num             = r_result
-                  EXCEPTIONS
-                    convt_no_number = 1
-                    convt_overflow  = 2
-                    OTHERS          = 3.
-                IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-                raise_check( function = 'X' ).
+                  catch cx_root.
 
-*                CALL FUNCTION 'CHAR_PACK_CONVERSION'
-*                  EXPORTING
-*                    input     = i_any
-*                  IMPORTING
-*                    decstring = r_result.
+                    call function 'MOVE_CHAR_TO_NUM'
+                      exporting
+                        chr             = i_any
+                      importing
+                        num             = r_result
+                      exceptions
+                        convt_no_number = 1
+                        convt_overflow  = 2
+                        others          = 3.
+                    if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+                    x_raise_check( function = 'X' ).
 
-            ENDCASE.
+                endtry.
 
 
+            endcase.
 
-          WHEN cl_abap_typedescr=>typekind_int
-          OR cl_abap_typedescr=>typekind_int1
-          OR cl_abap_typedescr=>typekind_int2.
 
-            CASE lv_type_kind_in.
 
-              WHEN cl_abap_typedescr=>typekind_packed
-              OR cl_abap_typedescr=>typekind_int
-            OR cl_abap_typedescr=>typekind_int1
-            OR cl_abap_typedescr=>typekind_int2.
+          when cl_abap_typedescr=>typekind_int
+          or cl_abap_typedescr=>typekind_int1
+          or cl_abap_typedescr=>typekind_int2.
+
+            case lv_type_kind_in.
+
+              when cl_abap_typedescr=>typekind_packed
+              or cl_abap_typedescr=>typekind_int
+            or cl_abap_typedescr=>typekind_int1
+            or cl_abap_typedescr=>typekind_int2.
 
                 r_result = i_any.
 
-              WHEN cl_abap_typedescr=>typekind_char
-             OR cl_abap_typedescr=>typekind_string
-             OR cl_abap_typedescr=>typekind_num.
+              when cl_abap_typedescr=>typekind_char
+             or cl_abap_typedescr=>typekind_string
+             or cl_abap_typedescr=>typekind_num.
 
-                DATA lv_n TYPE p LENGTH 16 DECIMALS 0.
+                data lv_n type p length 16 decimals 0.
 
-                CALL FUNCTION 'MOVE_CHAR_TO_NUM'
-                  EXPORTING
+                call function 'MOVE_CHAR_TO_NUM'
+                  exporting
                     chr             = i_any
-                  IMPORTING
+                  importing
                     num             = lv_n
-                  EXCEPTIONS
+                  exceptions
                     convt_no_number = 1
                     convt_overflow  = 2
-                    OTHERS          = 3.
-                IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-                raise_check( function = 'X' ).
+                    others          = 3.
+                if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+                x_raise_check( function = 'X' ).
 
                 r_result = lv_n.
 
-            ENDCASE.
+            endcase.
 
 
 
-          WHEN cl_abap_typedescr=>typekind_char
-          OR cl_abap_typedescr=>typekind_string
-          OR cl_abap_typedescr=>typekind_num.
+          when cl_abap_typedescr=>typekind_char
+          or cl_abap_typedescr=>typekind_string
+          or cl_abap_typedescr=>typekind_num.
+
+            r_result =  get(  print = 'X' i_any = i_any ).
+*             r_result = lcl_help=>WRITE( i_any ).
+*            WRITE i_any TO .
+*            r_result = get( trim = 'X' i_any = lv_c_500 ).
+
+          when others.
+            r_result = i_any.
 
 
-            WRITE i_any TO lv_c_500.
-            r_result = get( trim = 'X' i_any = lv_c_500 ).
-
-
-        ENDCASE.
+        endcase.
 
 
 *
@@ -1213,618 +1203,55 @@ endcase.
 **        ENDCASE.
 *        ENDCASE.
 
-        IF exit_in = abap_true.
+        if exit_in = abap_true.
           r_result = get( conv_in = 'X' i_any = r_result ).
-        ENDIF.
+        endif.
 
 
         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " error handling
 
-        DATA lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
+        data lx_root type ref to cx_root.
+      catch cx_root into lx_root.
         lcl_help=>handle_error( ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
+    endtry.
 
-  ENDMETHOD.
+  endmethod.
 
 
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>CX_INFO
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] IX_ROOT                        TYPE REF TO CX_ROOT
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] EV_CODE                        TYPE        STRING
-* | [<---] ET_ADD_T100                    TYPE        BAPIRET2_TAB
-* | [<---] EV_GUID                        TYPE        STRING
-* | [<---] ET_SOURCE                      TYPE        STRINGTAB
-* | [<---] ET_CALLSTACK                   TYPE        ABAP_CALLSTACK
-* | [<---] EV_VAL_PRINT                   TYPE        STRING
-* | [<---] ES_BAPIRET                     TYPE        BAPIRET2
-* | [<---] E_ADD_SERIAL                   TYPE        STRING
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD cx_info.
-
-    DATA:
-      lx_no    TYPE REF TO lcx_no_check,
-      lr_data  TYPE REF TO data,
-      lv_value TYPE string,
-      lv_descr TYPE string.
-    DATA: lx_root TYPE REF TO cx_root.
-    FIELD-SYMBOLS:
-    <lv_value> TYPE any.
-
-    "Infos aus Exception auslesen
-    "Bsp Nachricht, Logs, Callstack usw
-    TRY.
-        lx_no ?= ix_root.
-
-        et_add_t100 = lx_no->ms_data-add_t100.
-        ev_guid     = lx_no->ms_data-guid.
-        et_source   = lx_no->ms_data-t_source_code.
-        ev_code     = lx_no->ms_data-code.
-        es_bapiret  = lx_no->ms_data-s_bapiret.
-        et_callstack = lx_no->ms_data-t_callstack.
-        e_add_serial = lx_no->ms_data-add_serial.
-        ev_val_print = ' '.
-
-
-        IF lx_no->ms_data-serial_value IS NOT INITIAL.
-
-          json(
-            EXPORTING
-              json_2      = abap_true
-              i_any      = lx_no->ms_data-serial_value
-            IMPORTING
-              e_ref1      = lr_data
-          ).
-
-          IF lr_data IS BOUND.
-
-            ASSIGN lr_data->* TO <lv_value>.
-            trans( EXPORTING print = 'X' i_any = <lv_value> IMPORTING e_result = lv_value ).
-            rtti( EXPORTING i_any = <lv_value> IMPORTING ev_typedescr = lv_descr ).
-            CONCATENATE ev_val_print  lv_descr ' = '  lv_value '  |  ' INTO ev_val_print RESPECTING BLANKS.
-
-          ENDIF.
-
-          FREE lr_data.
-          json(
-            EXPORTING
-              json_2      = abap_true
-              i_any      = lx_no->ms_data-serial_value
-            IMPORTING
-              e_ref2      = lr_data
-          ).
-
-          IF lr_data IS BOUND.
-
-            ASSIGN lr_data->* TO <lv_value>.
-            trans( EXPORTING print = 'X' i_any = <lv_value> IMPORTING e_result = lv_value ).
-            rtti( EXPORTING i_any = <lv_value> IMPORTING ev_typedescr = lv_descr ).
-            CONCATENATE ev_val_print  lv_descr ' = '  lv_value '  |  ' INTO ev_val_print RESPECTING BLANKS.
-
-          ENDIF.
-
-          FREE lr_data.
-          json(
-            EXPORTING
-              json_2      = abap_true
-              i_any      = lx_no->ms_data-serial_value
-            IMPORTING
-              e_ref3      = lr_data
-          ).
-
-          IF lr_data IS BOUND.
-
-            ASSIGN lr_data->* TO <lv_value>.
-            trans( EXPORTING print = 'X' i_any = <lv_value> IMPORTING e_result = lv_value ).
-            rtti( EXPORTING i_any = <lv_value> IMPORTING ev_typedescr = lv_descr ).
-            CONCATENATE ev_val_print  lv_descr ' = '  lv_value '  |  ' INTO ev_val_print RESPECTING BLANKS.
-
-          ENDIF.
-
-          FREE lr_data.
-          json(
-            EXPORTING
-              json_2      = abap_true
-              i_any      = lx_no->ms_data-serial_value
-            IMPORTING
-              e_ref4      = lr_data
-          ).
-
-          IF lr_data IS BOUND.
-
-            ASSIGN lr_data->* TO <lv_value>.
-            trans( EXPORTING print = 'X' i_any = <lv_value> IMPORTING e_result = lv_value ).
-            rtti( EXPORTING i_any = <lv_value> IMPORTING ev_typedescr = lv_descr ).
-            CONCATENATE ev_val_print  lv_descr ' = '  lv_value '  |  ' INTO ev_val_print RESPECTING BLANKS.
-
-          ENDIF.
-
-
-          SHIFT ev_val_print RIGHT DELETING TRAILING ' '.
-          SHIFT ev_val_print RIGHT DELETING TRAILING '|'.
-          SHIFT ev_val_print LEFT DELETING LEADING ' '.
-
-        ENDIF.
-
-        RETURN.
-
-      CATCH cx_root INTO lx_root.
-*        lcl_local_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-
-
-
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    " OData Exception
-
-    DATA lx_odata TYPE REF TO /iwbep/cx_mgw_base_exception.
-
-    TRY.
-
-        lx_odata ?= ix_root.
-
-        msg( EXPORTING i_any  = lx_odata->message_container
-              IMPORTING e_any = et_add_t100 ) .
-
-
-      CATCH cx_root INTO lx_root.
-*        lcl_local_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>DB_DELETE
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] SO10                           TYPE        ABAP_BOOL(optional)
-* | [--->] BAL                            TYPE        ABAP_BOOL(optional)
-* | [--->] VARI                           TYPE        ABAP_BOOL(optional)
-* | [--->] ALL                            TYPE        ABAP_BOOL(optional)
-* | [--->] GOS                            TYPE        ABAP_BOOL(optional)
-* | [--->] GOS_HEAD                       TYPE        ABAP_BOOL(optional)
-* | [--->] GOS_LIST                       TYPE        ABAP_BOOL(optional)
-* | [--->] I_KEY1                         TYPE        ANY(optional)
-* | [--->] I_KEY2                         TYPE        ANY(optional)
-* | [--->] I_KEY3                         TYPE        ANY(optional)
-* | [--->] I_KEY4                         TYPE        ANY(optional)
-* | [--->] COMMIT                         TYPE        ABAP_BOOL(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD db_delete.
-
-    "Löschen von DB Eintraegen von verschiedenen Services
-    "Business Log, GOS Objekte, SO10 Texte, Vari Tab usw
-    TRY.
-        CASE abap_true.
-
-          WHEN all.
-            "Generisches Lesen von Daten aus DB
-
-            db_delete(
-                 vari = 'X'
-                 raise_error = 'X'
-                 i_key1 = i_key1
-                 i_key2 = i_key2
-                 i_key3 = i_key3
-                        ).
-
-
-          WHEN vari.
-            "VARI Tabelle für Selektionsvarianten
-            "generische Ablage für unstrukturierte Daten
-
-            DATA lv_key TYPE c LENGTH 54.
-            DATA lv_string TYPE string.
-
-            lv_string = get( trim = 'X' i_any = i_key1 ) &&
-                        get( trim = 'X' i_any = i_key2 ) &&
-                        get( trim = 'X' i_any = i_key3 ).
-            lv_key(54) = lv_string.
-
-            do( free_sy = 'X').
-            DELETE FROM DATABASE vari(z1) CLIENT sy-mandt ID lv_key.
-            IF sy-subrc = 4.
-              raise( i_head = 'ZCX_DELETE_VARI_DATABASE_ERROR'
-                    i_any = get_msg( i_any = 'ZCX_NO_ENTRY_WITH_KEY_&1_FOUND' iv_v1 = lv_key ) ).
-            ELSE.
-              raise_check( sy_subrc = 'X' i_head = 'ZCX_DELETE_VARI_DATABASE_ERROR' ).
-            ENDIF.
-
-        ENDCASE.
-
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " DB Commit
-
-        IF commit = 'X'.
-          do( commit_a_wait = 'X' ).
-        ENDIF.
-
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " error handling
-
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>DB_READ
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] SO10                           TYPE        ABAP_BOOL(optional)
-* | [--->] BAL                            TYPE        ABAP_BOOL(optional)
-* | [--->] VARI                           TYPE        ABAP_BOOL(optional)
-* | [--->] ALL                            TYPE        ABAP_BOOL(optional)
-* | [--->] GOS                            TYPE        ABAP_BOOL(optional)
-* | [--->] GOS_HEAD                       TYPE        ABAP_BOOL(optional)
-* | [--->] GOS_LIST                       TYPE        ABAP_BOOL(optional)
-* | [--->] I_KEY1                         TYPE        ANY(optional)
-* | [--->] I_KEY2                         TYPE        ANY(optional)
-* | [--->] I_KEY3                         TYPE        ANY(optional)
-* | [--->] I_KEY4                         TYPE        ANY(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] E_RESULT                       TYPE        DATA
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD db_read.
-
-    "Lesen der Datenbank ueber verschiedene Services
-    "Business Log, GOS Objekte, SO10 Texte, Vari Tab usw
-    TRY.
-        CASE abap_true.
-
-          WHEN all.
-            "Generisches Lesen von Daten aus DB
-
-            DATA lv_data TYPE string.
-
-            db_read( EXPORTING vari = 'X' raise_error = 'X' i_key1 = i_key1 i_key2 = i_key2 i_key3 = i_key3
-                     IMPORTING e_result = lv_data ).
-
-            "Daten von flache Form in Zieltyp
-            trans( EXPORTING json_2 = 'X' unzip = 'X' i_any = lv_data
-                   IMPORTING e_result = e_result  ).
-
-
-          WHEN gos_head.
-            "Generic Object Services - GOS
-            "read head infos for a specific document
-
-            DATA ls_link TYPE obl_s_link.
-            DATA ls_gos_head_result TYPE sofolenti1 .
-
-            ls_link-instid_b = i_key1. "FOL27000000000004EXT44000000000100
-            ls_gos_head_result = lcl_help=>gos_read_object_head( ls_link  ).
-            e_result = ls_gos_head_result.
-
-
-          WHEN gos.
-            "Generic Object Services - GOS
-            "read a specific document Content
-
-            DATA lv_gos_result TYPE xstring.
-
-            ls_link-instid_b = i_key1. "FOL27000000000004EXT44000000000100
-            lv_gos_result    = lcl_help=>gos_read_object_content( ls_link ).
-            e_result         = lv_gos_result.
-
-
-          WHEN gos_list.
-            "Generic Object Services - GOS
-            "get list of all docuemts
-
-            DATA lv_instid TYPE  sibflporb-instid.
-            DATA lv_typeid TYPE sibflporb-typeid.
-            DATA lv_catid TYPE sibflporb-catid.
-            DATA lt_gos_list_result TYPE obl_t_link.
-
-            lv_instid = i_key1. " '0010270682'
-            lv_typeid = i_key2. " 'BUS2105'
-            lv_catid  = i_key3. " 'BO'
-
-            lt_gos_list_result =  lcl_help=>gos_read_object_list(
-                                     iv_instid      = lv_instid
-                                     iv_typeid      = lv_typeid
-                                     iv_catid       = lv_catid  ).
-
-            e_result = lt_gos_list_result.
-
-
-          WHEN vari.
-            "VARI Tabelle für Selektionsvarianten
-            "generische Ablage für unstrukturierte Daten
-
-            DATA lv_key TYPE c LENGTH 54.
-            DATA lv_string TYPE string.
-
-            lv_string = get( trim = 'X' i_any = i_key1 ) &&
-                        get( trim = 'X' i_any = i_key2 ) &&
-                        get( trim = 'X' i_any = i_key3 ).
-            lv_key(54) = lv_string.
-
-            do( free_sy = 'X').
-            IMPORT data = lv_data FROM DATABASE vari(z1) CLIENT sy-mandt ID lv_key.
-            raise_check( sy_subrc = 'X' i_head = 'ZCX_READ_DATABASE_VARI_ERROR' ).
-
-            IF check( convertible = 'X' i_any = e_result i_any2 = lv_data ) = abap_true.
-              e_result = lv_data.
-            ELSE.
-              raise('ZCX_WRONG_TYPE_OF_OUTPUT').
-            ENDIF.
-
-
-          WHEN so10.
-            "SO10 Texte
-            "read a specific text
-
-            DATA lv_object TYPE thead-tdobject.
-            DATA lv_name   TYPE thead-tdname.
-            DATA lv_id     TYPE thead-tdid.
-            DATA lv_langu  TYPE thead-tdspras.
-            DATA lt_so10_result TYPE stringtab.
-
-            lv_object = i_key1. " 'VBBK'
-            lv_id     = i_key2. " '0002' Type
-            lv_name   = i_key3. " '0030000000' Auftrag
-            lv_langu  = i_key4. " 'E'
-
-            lcl_help=>so10_read(
-            EXPORTING
-                i_key1   = lv_object
-                i_key2   = lv_id
-                i_key3   = lv_name
-                i_key4   = lv_langu
-            IMPORTING
-              e_result = lt_so10_result ).
-
-            e_result = lt_so10_result.
-
-
-          WHEN bal.
-            "Business Application Log - BAL
-            "read a specific log
-
-            lcl_help=>bal_read(
-              EXPORTING
-                iv_object    = i_key1
-                iv_subobject = i_key2
-                iv_extnumber = i_key3
-              RECEIVING
-                rt_balmt     = DATA(lt_balmt) ).
-
-            IF 'BALM_T' = get(  rtti_type = 'X' i_any = e_result ).
-              e_result = lt_balmt.
-            ELSE.
-              msg( EXPORTING i_any = lt_balmt
-                   IMPORTING e_any = e_result ).
-              itab( EXPORTING change_sequence = 'X'
-                    CHANGING  ct_tab          = e_result  ).
-            ENDIF.
-
-
-          WHEN OTHERS.
-            raise('ZCX_WRONG_CALL_OF_METHOD').
-        ENDCASE.
-
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " error handling
-
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>DB_UPDATE
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] BAL                            TYPE        ABAP_BOOL(optional)
-* | [--->] VARI                           TYPE        ABAP_BOOL(optional)
-* | [--->] SO10                           TYPE        ABAP_BOOL(optional)
-* | [--->] BAL_INDX                       TYPE        ABAP_BOOL(optional)
-* | [--->] ALL                            TYPE        ABAP_BOOL(optional)
-* | [--->] GOS                            TYPE        ABAP_BOOL(optional)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_KEY1                         TYPE        ANY(optional)
-* | [--->] I_KEY2                         TYPE        ANY(optional)
-* | [--->] I_KEY3                         TYPE        ANY(optional)
-* | [--->] I_KEY4                         TYPE        ANY(optional)
-* | [--->] COMMIT                         TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD db_update.
-
-    "Schreiben der Datenbank ueber verschiedene Services
-    "Business Log, GOS Objekte, SO10 Texte, Vari Tab usw
-    TRY.
-        CASE abap_true.
-
-          WHEN all.
-
-            DATA lv_data TYPE string.
-
-            "Daten in flache Form umwandeln
-            trans( EXPORTING json = 'X' zip = 'X' i_any = i_any raise_error = 'X'
-                   IMPORTING e_result = lv_data ).
-
-            db_update( vari = 'X' i_key1 = i_key1 i_key2 = i_key2 i_key3 = i_key3
-                     commit = commit raise_error = abap_true i_any = lv_data ).
-
-          WHEN gos.
-
-            lcl_help=>gos_create_object(
-              iv_data           = i_any
-              iv_instid         = i_key1 "i_gs_object-instid
-              iv_typeid         = i_key2 "gs_object-typeid
-              iv_catid          = i_key3 "gs_object-catid
-              iv_filename_w_ext = i_key4 "i_any2 "'example.pdf'
-              commit_work       = commit
-              ).
-
-          WHEN vari.
-
-            DATA lv_key TYPE c LENGTH 54.
-            DATA lv_string TYPE string.
-
-            lv_string = get( trim = 'X' i_any = i_key1 ) &&
-                        get( trim = 'X' i_any = i_key2 ) &&
-                        get( trim = 'X' i_any = i_key3 ).
-            lv_key(54) = lv_string.
-
-            trans( EXPORTING id = 'X' i_any = i_any raise_error = 'X'
-                   IMPORTING e_result = lv_data ).
-            do( free_sy = 'X').
-            EXPORT data = lv_data TO DATABASE vari(z1) CLIENT sy-mandt ID lv_key.
-            raise_check( sy_subrc = 'X' ).
-
-
-          WHEN bal.
-
-            DATA:
-              ls_log    TYPE bal_s_log.
-
-            ls_log-object    = i_key1.
-            ls_log-subobject = i_key2.
-            ls_log-extnumber = i_key3.
-
-            lcl_help=>bal_save(  i_any = i_any is_log = ls_log ).
-
-
-          WHEN bal_indx.
-
-            DATA: lv_key_bal_indx TYPE c LENGTH 20.
-            CONCATENATE i_key1 i_key2 i_key3 i_key4 INTO lv_string.
-            SHIFT lv_string LEFT DELETING LEADING ' '.
-            lv_key_bal_indx = lv_string.
-
-            "Daten in flache Form umwandeln
-            trans(
-               EXPORTING
-                  xml          = 'X'
-                  zip                = 'X'
-                  i_any              = i_any
-               IMPORTING
-                  e_result           = lv_data ).
-
-
-            do( free_sy = 'X').
-            EXPORT data = lv_data TO DATABASE bal_indx(z1) CLIENT sy-mandt ID lv_key_bal_indx.
-            raise_check( sy_subrc = 'X' ).
-
-
-          WHEN so10.
-
-            DATA lv_object TYPE thead-tdobject.
-            DATA lv_name   TYPE thead-tdname.
-            DATA lv_id     TYPE thead-tdid.
-            DATA lv_langu  TYPE thead-tdspras.
-            DATA lt_so10_stringtab TYPE stringtab.
-            DATA lt_so10_result TYPE stringtab.
-
-            lv_object = i_key1. " 'VBBK'
-            lv_id     = i_key2. " '0002' Type
-            lv_name   = i_key3. " '0030000000' Auftrag
-            lv_langu  = i_key4. " 'E'
-
-            lt_so10_stringtab = i_any.
-
-            lcl_help=>so10_write(
-                i_key1   = lv_object
-                i_key2   = lv_id
-                i_key3   = lv_name
-                i_key4   = lv_langu
-                i_any    = lt_so10_stringtab
-                i_commit = commit
-                ).
-
-          WHEN OTHERS.
-            raise('CX_WONG_CALL_OF_METHOD').
-        ENDCASE.
-
-        IF commit = 'X'.
-          do( commit_a_wait = 'X' ).
-        ENDIF.
-
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " error handling
-
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error( ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>DO
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] FREE_SY                        TYPE        ABAP_BOOL(optional)
-* | [--->] COMMIT_A_WAIT                  TYPE        ABAP_BOOL(optional)
-* | [--->] ROLLBACK                       TYPE        ABAP_BOOL(optional)
-* | [--->] SEND_EMAIL                     TYPE        ABAP_BOOL(optional)
-* | [--->] SEND_IDOC                      TYPE        ABAP_BOOL(optional)
-* | [--->] RAISE_EVENT                    TYPE        ABAP_BOOL(optional)
-* | [--->] RFC_NEW_TASK                   TYPE        ABAP_BOOL(optional)
-* | [--->] RFC_BACKGROUND_TASK            TYPE        ABAP_BOOL(optional)
-* | [--->] RFC_PARALLEL_TASK              TYPE        ABAP_BOOL(optional)
-* | [--->] AMC_SEND                       TYPE        ABAP_BOOL(optional)
-* | [--->] HTTP_REQ_SET                   TYPE        ABAP_BOOL(optional)
-* | [--->] HTTP_REQ_GET                   TYPE        ABAP_BOOL(optional)
-* | [--->] REPORT_START                   TYPE        ABAP_BOOL(optional)
-* | [--->] INIT                           TYPE        ABAP_BOOL(optional)
-* | [--->] INIT_CUST                      TYPE        ABAP_BOOL(optional)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_ANY2                         TYPE        ANY(optional)
-* | [--->] I_ANY3                         TYPE        ANY(optional)
-* | [--->] I_ANY5                         TYPE        ANY(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] E_ANY                          TYPE        ANY
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD do.
+  method do.
 
     " Methode zum Ausfuehren haeufig wiederkehrender Aktionen
     " commit, rollback, rfc, usw
-    TRY.
-        CASE abap_true.
+    try.
+        case abap_true.
 
-          WHEN init.
+          when init.
 
             "Helper initialisieren
-            DATA(lo_help) = NEW lcl_help(  ).
-            FREE lo_help.
+            data(lo_help) = new lcl_help(  ).
+            clear lo_help.
 
 
-          WHEN init_cust.
+          when init_cust.
 
-            FIELD-SYMBOLS: <ls_data> TYPE data.
-            ASSIGN i_any->* TO <ls_data>.
-            lcl_help=>init_cust( IMPORTING e_any2 =  <ls_data> ).
+            field-symbols: <ls_data> type data.
+            assign i_any->* to <ls_data>.
+            lcl_help=>init_cust( importing e_any2 =  <ls_data> ).
 
 
-          WHEN amc_send.
+          when amc_send.
 
-            DATA: lv_amc_msg        TYPE string.
-            DATA: lv_amc_channel_id TYPE string.
-            DATA: lv_amc_appli_id   TYPE c LENGTH 30. "string.
+            data: lv_amc_msg        type string.
+            data: lv_amc_channel_id type string.
+            data: lv_amc_appli_id   type c length 30. "string.
 
             lv_amc_appli_id   = i_any.
             lv_amc_channel_id = i_any2.
             lv_amc_msg        = i_any3.
 
 
-            CAST if_amc_message_producer_text(
+            cast if_amc_message_producer_text(
 
                    cl_amc_channel_manager=>create_message_producer(
                      i_application_id = lv_amc_appli_id "'ZKAL_MC_UI5_TEST' "ZAMC_TESTÃ¢â#¬â#¢
@@ -1833,7 +1260,7 @@ endcase.
               )->send( i_message = lv_amc_msg ) . "|Static text| ).
 
 
-          WHEN http_req_get.
+          when http_req_get.
 
 
             lcl_help=>http_request_get(
@@ -1849,57 +1276,56 @@ endcase.
 
 
 
-          WHEN free_sy.
+          when free_sy.
 
-            FREE: sy-subrc, sy-msgid, sy-msgno, sy-msgty, sy-msgv1, sy-msgv2, sy-msgv3, sy-msgv4.
+            free: sy-subrc, sy-msgid, sy-msgno, sy-msgty, sy-msgv1, sy-msgv2, sy-msgv3, sy-msgv4.
 
+          when commit_a_wait.
 
-          WHEN commit_a_wait.
+            data ls_return  type bapiret2.
 
-            DATA ls_return  TYPE bapiret2.
-
-            CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
-              EXPORTING
+            call function 'BAPI_TRANSACTION_COMMIT'
+              exporting
                 wait          = abap_true    " Using the command `COMMIT AND WAIT`
-              IMPORTING
+              importing
                 return        = ls_return    " Return Messages
-              EXCEPTIONS
+              exceptions
                 error_message = 1
-                OTHERS        = 2.
-            IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-            raise_check( function = 'X' i_check1 = ls_return ).
+                others        = 2.
+            if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+            x_raise_check( function = 'X' i_check1 = ls_return ).
 
 
-          WHEN rollback.
+          when rollback.
 
-            CALL FUNCTION 'BAPI_TRANSACTION_ROLLBACK'
-              IMPORTING
+            call function 'BAPI_TRANSACTION_ROLLBACK'
+              importing
                 return        = ls_return    " Return Messages
-              EXCEPTIONS
+              exceptions
                 error_message = 1
-                OTHERS        = 2.
-            IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-            raise_check( function = 'X' i_check1 = ls_return ).
+                others        = 2.
+            if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+            x_raise_check( function = 'X' i_check1 = ls_return ).
 
 
-          WHEN rfc_background_task OR rfc_new_task OR rfc_parallel_task.
+          when rfc_background_task or rfc_new_task or rfc_parallel_task.
 
-            CASE abap_true.
-              WHEN rfc_new_task.
+            case abap_true.
+              when rfc_new_task.
 
 *                if abap_false = check( castable = 'X' i_any = 'IF_SERIALIZABLE_OBJECT' i_any2 = i_any ).
 *                  raise( 'ZCX_INPUT_OBJECT_NOT_SERIALIZABLE_ERROR').
 *                endif.
 
-                NEW lcl_rfc_control( )->start_new_task(
-                  EXPORTING
-                    iv_method_name = i_any2
-                    if_object      = i_any
-                  IMPORTING
-                    ei_object      = e_any
-                ).
+*                new lcl_rfc_control( )->start_new_task(
+*                  exporting
+*                    iv_method_name = i_any2
+*                    if_object      = i_any
+*                  importing
+*                    ei_object      = e_any
+*                ).
 
-            ENDCASE.
+            endcase.
 *            lv_name_merfc_new_taskthod = i_any2.
 *            Methodenname zum ausfÃ¼hren
 *            und serialisierbares Objekt Ã¼bergeben
@@ -1909,7 +1335,7 @@ endcase.
 *            pbt( i_any = i_any ).
 
 
-          WHEN report_start.
+          when report_start.
 
 *            IF sy-slset IS INITIAL OR sy-slset <> iv_repid_variant.
 *
@@ -1935,130 +1361,130 @@ endcase.
 *
 *            ENDIF.
 
-          WHEN OTHERS.
-            raise('ZCX_WORNG_CALL_OF_METHOD').
+          when others.
+            x_raise('ZCX_WORNG_CALL_OF_METHOD').
 
-        ENDCASE.
+        endcase.
 
 
         """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " error handling
 
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
+        data: lx_root type ref to cx_root.
+      catch cx_root into lx_root.
         lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
+    endtry.
 
 
-  ENDMETHOD.
+  endmethod.
 
 
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>GET
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] CONV_IN                        TYPE        ABAP_BOOL(optional)
-* | [--->] CONV_OUT                       TYPE        ABAP_BOOL(optional)
-* | [--->] PRINT                          TYPE        ABAP_BOOL(optional)
-* | [--->] PRINT_DEEP                     TYPE        ABAP_BOOL(optional)
-* | [--->] XML                            TYPE        ABAP_BOOL(optional)
-* | [--->] JSON                           TYPE        ABAP_BOOL(optional)
-* | [--->] JSON_DEEP                      TYPE        ABAP_BOOL(optional)
-* | [--->] ZIP                            TYPE        ABAP_BOOL(optional)
-* | [--->] UNZIP                          TYPE        ABAP_BOOL(optional)
-* | [--->] PARAM_USER                     TYPE        ABAP_BOOL(optional)
-* | [--->] TRIM_UPPER_CASE                TYPE        ABAP_BOOL(optional)
-* | [--->] TRIM                           TYPE        ABAP_BOOL(optional)
-* | [--->] PARAM_SYSTEM                   TYPE        ABAP_BOOL(optional)
-* | [--->] PARAM_ID                       TYPE        ABAP_BOOL(optional)
-* | [--->] MSG_TYPE                       TYPE        ABAP_BOOL(optional)
-* | [--->] TEXT                           TYPE        ABAP_BOOL(optional)
-* | [--->] DD04T                          TYPE        ABAP_BOOL(optional)
-* | [--->] GUID16                         TYPE        ABAP_BOOL(optional)
-* | [--->] RTTI_KIND                      TYPE        ABAP_BOOL(optional)
-* | [--->] RTTI_TYPE                      TYPE        ABAP_BOOL(optional)
-* | [--->] RTTI_TYPE_KIND                 TYPE        ABAP_BOOL(optional)
-* | [--->] RTTI_TYPE_SUPER                TYPE        ABAP_BOOL(optional)
-* | [--->] RTTI_TYPE_DYNAM                TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_CHOOSE                   TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_CONFIRM                  TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_GET_VALUE                TYPE        ABAP_BOOL(optional)
-* | [--->] METHODNAME                     TYPE        ABAP_BOOL(optional)
-* | [--->] CX_CODE                        TYPE        ABAP_BOOL(optional)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_ANY2                         TYPE        ANY(optional)
-* | [--->] I_ANY3                         TYPE        ANY(optional)
-* | [--->] I_ANY4                         TYPE        ANY(optional)
-* | [--->] I_ANY5                         TYPE        ANY(optional)
-* | [--->] IV_LANGU                       TYPE        ANY (default =SY-LANGU)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] LOG_INFO                       TYPE        ABAP_BOOL(optional)
-* | [<-()] R_RESULT                       TYPE        STRING
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD  get.
+  method  get.
 
-    "Durchführen diverser Aktionen
+    "Durchführen verschiedener Transformationen
     "Bsp JSON Tranformationen, zippen, msg texte, popups, RTTI infos usw
     "Ergebnis als String
-    TRY.
-        CASE abap_true.
+    try.
+        case abap_true.
 
-          WHEN methodname.
+          when hash.
 
-            DATA lv_depth TYPE i.
-            IF i_any IS NOT INITIAL.
+            data lv_hash_input type string.
+            data lv_hash_output type string.
+
+            lv_hash_input = i_any.
+
+            cl_abap_message_digest=>calculate_hash_for_char(
+                exporting
+                     if_data                = lv_hash_input    " Data
+                importing
+                     ef_hashstring          =  lv_hash_output   " Hash value as hex encoded string
+*                    ef_hashxstring         =     " Binary hash value as XString
+*                    ef_hashb64string       =     " Hash value as base64 encoded string
+*                    ef_hashx               =     " Hash value as XSequence
+).
+
+            r_result = lv_hash_output.
+
+
+          when methodname.
+
+            data lv_depth type i.
+            if i_any is not initial.
               lv_depth = i_any.
-            ENDIF.
+            endif.
             lv_depth = lv_depth + 1.
 
             info(
-              EXPORTING
+              exporting
                 iv_depth           = lv_depth
-              IMPORTING
+              importing
                 ev_method          = r_result
             ).
 
 
-          WHEN text.
-            msg( EXPORTING i_any = i_any iv_langu = iv_langu raise_error = 'X'
-                 IMPORTING e_any = r_result ).
+          when text.
+            msg( exporting i_any = i_any i_langu = iv_langu raise_error = 'X'
+                 importing e_any = r_result ).
 
 
-          WHEN msg_type.
-            msg( EXPORTING i_any = i_any iv_langu = iv_langu raise_error = 'X'
-                IMPORTING ev_type = r_result ).
+          when msg_type.
+            r_result = msg( i_any = i_any i_langu = iv_langu raise_error = 'X' )-type.
+
+          when zip.
+            trans( exporting zip = 'X' i_any = i_any raise_error = 'X'
+                   importing e_result = r_result ).
+
+          when unzip.
+            trans( exporting unzip = 'X' i_any = i_any raise_error = 'X'
+                   importing e_result = r_result ).
+
+          when json.
+            trans( exporting json = 'X' i_any = i_any raise_error = 'X'
+                   importing e_result = r_result ).
 
 
-          WHEN zip.
-            trans( EXPORTING zip = 'X' i_any = i_any raise_error = 'X'
-                   IMPORTING e_result = r_result ).
+          when print_date or print_time.
 
-          WHEN unzip.
-            trans( EXPORTING unzip = 'X' i_any = i_any raise_error = 'X'
-                   IMPORTING e_result = r_result ).
+            data lv_timestampl type timestampl.
+            data lv_date type d.
+            data lv_time type t.
+            lv_timestampl = i_any.
 
-          WHEN json.
-            trans( EXPORTING json = 'X' i_any = i_any raise_error = 'X'
-                   IMPORTING e_result = r_result ).
+            if lv_timestampl is initial.
+              get time stamp field lv_timestampl.
+            endif.
 
-          WHEN json_deep.
+            convert time stamp lv_timestampl
+            time zone sy-zonlo
+            into date lv_date
+            time lv_time.
+
+            if print_date = abap_true.
+              r_result =  get(  print = 'X' i_any = lv_date ).
+            else.
+              r_result =  get(  print = 'X' i_any = lv_time ).
+            endif.
+
+          when json_deep.
 
             json(
-              EXPORTING
+              exporting
                 i_any = i_any
                 i_any2 = i_any2
                 i_any3 = i_any3
                 i_any4 = i_any4
                 i_any5 = i_any5
-              IMPORTING
+              importing
                 e_any1      = r_result
             ).
 
 
-          WHEN xml.
-            trans( EXPORTING xml = 'X' i_any = i_any raise_error = 'X'
-                   IMPORTING e_result = r_result ).
+          when xml.
+            trans( exporting xml = 'X' i_any = i_any raise_error = 'X'
+                   importing e_result = r_result ).
 
-          WHEN conv_in.
+          when conv_in.
             "FÃ¼hrt einen Conversion Exit Input mit i_any durch
             "wenn i_any2 gefÃ¼llt dann erfolgt exit Ã¼ber typ bestimmung
             "wenn i_any3 gefÃ¼llt wird wert als exitname verwendet
@@ -2067,7 +1493,7 @@ endcase.
                                             iv_type = i_any2
                                             iv_exit = i_any3 ).
 
-          WHEN conv_out.
+          when conv_out.
             "FÃ¼hrt einen Conversion Exit Input mit i_any durch
             "wenn i_any2 gefÃ¼llt dann erfolgt exit Ã¼ber typ bestimmung
             "wenn i_any3 gefÃ¼llt wird wert als exitname verwendet
@@ -2078,18 +1504,18 @@ endcase.
                                             iv_is_input = abap_false ).
 
 
-          WHEN popup_choose.
+          when popup_choose.
 
-            DATA lv_result TYPE string.
+            data lv_result type string.
 
-            gui(
-              EXPORTING
-                popup_choose      = 'X'
+            gui_popup(
+              exporting
+                choose            = 'X'
                 i_any             = i_any
                 i_any2            = i_any2
                 iv_title          = i_any3
                 raise_error       = raise_error
-              IMPORTING
+              importing
                 e_any             = lv_result
 *
             ).
@@ -2100,171 +1526,130 @@ endcase.
               ).
             r_result = lv_result.
 
-          WHEN popup_confirm.
-            DATA lv_answer TYPE string.
-            gui(
-              EXPORTING
-                popup_confirm     = 'X'
-                i_any             = i_any
-              IMPORTING
-*            e_any             =
-                ev_answer         = lv_answer
-            ).
 
-            CASE lv_answer.
-              WHEN cs-s_popup_answer-yes.
-                r_result = abap_true.
-            ENDCASE.
 
-          WHEN trim_upper_case.
+          when trim_upper_case.
+            r_result = get( trim = 'X' i_any = i_any ).
+            translate  r_result to upper case.
+
+          when trim.
             r_result = i_any.
-            SHIFT r_result RIGHT DELETING TRAILING ' '.
-            SHIFT r_result LEFT DELETING LEADING ' '.
-            TRANSLATE r_result TO UPPER CASE.
+            shift r_result right deleting trailing ' '.
+            shift r_result left deleting leading ' '.
 
-          WHEN trim.
-            r_result = i_any.
-            SHIFT r_result RIGHT DELETING TRAILING ' '.
-            SHIFT r_result LEFT DELETING LEADING ' '.
+          when print_deep.
 
-          WHEN print_deep.
+            trans( exporting print = 'X' i_any = i_any
+                   importing e_result = r_result ).
 
-            trans( EXPORTING print = 'X' i_any = i_any
-                   IMPORTING e_result = r_result ).
+          when print.
 
-          WHEN print.
-            DATA lv_c TYPE c LENGTH 500.
+            r_result =  lcl_help=>write( i_any ).
 
-            WRITE i_any TO lv_c.
-            SHIFT lv_c LEFT DELETING LEADING ' '.
-            r_result = lv_c.
+          when log_info.
 
-*            trans( EXPORTING print = 'X' i_any = i_any
-*                   IMPORTING e_result = r_result ).
+            data(lv_date2) = get( print_date = 'X' ).
+            data(lv_time2) = get( print_time = 'X' ).
 
-
-          WHEN log_info.
-
-            info(
-              IMPORTING
-                ev_time_write      = DATA(lv_time)
-                ev_date_write      = DATA(lv_date)
-            ).
-
-            CONCATENATE
-             lv_date
-             lv_time
+            concatenate
+             lv_date2
+             lv_time2
              sy-uname
-             INTO r_result SEPARATED BY ' / '.
+             into r_result separated by ' / '.
 
+          when rtti_type_line.
 
+            rtti( exporting i_any        = i_any
+                  importing ev_line_type = r_result ).
 
-          WHEN rtti_type_kind.
-            rtti( EXPORTING i_any        = i_any
-                  IMPORTING ev_type_kind = r_result ).
+          when rtti_type_kind.
+            rtti( exporting i_any        = i_any
+                  importing ev_type_kind = r_result ).
 
-          WHEN rtti_kind.
-            rtti( EXPORTING i_any   = i_any
-                  IMPORTING ev_kind = r_result ).
+          when rtti_kind.
+            rtti( exporting i_any   = i_any
+                  importing ev_kind = r_result ).
 
-          WHEN guid16.
-*            DATA: lv_guid_16 TYPE guid_16.
+          when guid16.
+
+*            DATA lv_guid_16 TYPE guid_16.
 *            CALL FUNCTION 'GUID_CREATE'
 *              IMPORTING
 *                ev_guid_16 = lv_guid_16.
-            DATA: l_uuid_16  TYPE sysuuid_x16.
-            l_uuid_16 = cl_system_uuid=>create_uuid_x16_static( ).
+*            r_result = lv_gui_16.
 
-            r_result = l_uuid_16. "lv_guid_16.
-
-
-          WHEN param_id.
-
-            IMPORT testmemory TO r_result FROM MEMORY ID 'TESTMEMORY'.
+            data: lv_uuid_16  type sysuuid_x16.
+            lv_uuid_16 = cl_system_uuid=>create_uuid_x16_static( ).
+            r_result = lv_uuid_16.
 
 
-          WHEN param_system.
+          when param_id.
 
-            DATA:
-                ls_tvarvc TYPE tvarvc.
+            import testmemory to r_result from memory id 'TESTMEMORY'.
 
-            FREE ls_tvarvc.
-            ls_tvarvc-name = i_any.
+
+          when param_system.
+
+            data ls_tvarvc type tvarvc.
+            ls_tvarvc-type = get( trim_upper_case = 'X' i_any = i_any ).
             ls_tvarvc-type = i_any2.
-
-            TRANSLATE ls_tvarvc-name TO UPPER CASE.
-            SHIFT     ls_tvarvc-name LEFT DELETING LEADING ' '.
-*            ls_tvarvc-name = get( conv_in = 'X' i_any = ls_tvarvc-name ).
             ls_tvarvc-type = get( conv_in = 'X' i_any = ls_tvarvc-type ).
 
-            SELECT SINGLE *
-            FROM tvarvc
-            INTO CORRESPONDING FIELDS OF ls_tvarvc
-            WHERE name = ls_tvarvc-name
-            AND type   = ls_tvarvc-type.
-            raise_check(
-                select = abap_true
-                i_ser_value = get( json_deep = 'X'
-                                    i_any  = ls_tvarvc-name
-                                    i_any2 = ls_tvarvc-type )
-                        ).
+            select low
+            up to 1 rows
+            from tvarvc
+            into ls_tvarvc-low
+            where name = ls_tvarvc-name
+            and type   = ls_tvarvc-type
+            order by primary key.
+            endselect.
+            x_raise_check( select ='X'
+                i_check1 = ls_tvarvc-name
+                i_check2 = ls_tvarvc-type ).
 
             r_result = ls_tvarvc-low.
 
-          WHEN param_user.
 
-            DATA: lv_parid TYPE usr05-parid,
-                  lv_user  TYPE usr05-bname.
+          when param_user.
 
-            lv_parid = i_any.
-            lv_user  = i_any2.
+            data ls_usr05 type usr05.
+            ls_usr05-parid = get( trim_upper_case = 'X' i_any = i_any ).
+            if i_any2 is not initial.
+              ls_usr05-bname = get( trim_upper_case = 'X' i_any = i_any2 ).
+            else.
+              ls_usr05-bname = get( trim_upper_case = 'X' i_any = sy-uname ).
+            endif.
 
-            SELECT SINGLE parva
-                FROM usr05
-                INTO r_result
-                WHERE bname = lv_user
-                AND   parid = lv_parid.
-            raise_check( select = abap_true i_ser_value = get( json_deep = 'X' i_any = lv_user i_any2 = lv_parid ) ).
+            select parva
+            up to 1 rows
+            from usr05
+            into ls_usr05-parva
+            where bname = ls_usr05-bname
+            and   parid = ls_usr05-parid
+            order by primary key.
+            endselect.
+            x_raise_check( select = 'X'
+                     i_check1 = ls_usr05-bname
+                     i_check2 = ls_usr05-parid ).
+
+            r_result = ls_usr05-parva.
 
 
-          WHEN dd04t.
-            DATA ls_dd04t   TYPE dd04t.
+          when dd04t.
 
-            FREE ls_dd04t.
-            ls_dd04t-rollname   = get( trim_upper_case = 'X' i_any = i_any    ).
-            ls_dd04t-ddlanguage = get( trim_upper_case = 'X' i_any = iv_langu ).
+            r_result = get_bus( dd04t_scrtext_by_rollname_leng = 'X'
+                                     i_any    = i_any
+                                     i_any2   = i_any2
+                                     iv_langu = iv_langu ).
 
-            READ TABLE ss_db_buffer-t_dd04t INTO ls_dd04t
-                WITH TABLE KEY rollname = ls_dd04t-rollname ddlanguage = ls_dd04t-ddlanguage.
-            IF sy-subrc <> 0.
-              SELECT SINGLE *
-              FROM dd04t
-              INTO ls_dd04t
-              WHERE rollname  = ls_dd04t-rollname
-              AND  ddlanguage = iv_langu.
-              INSERT ls_dd04t INTO TABLE ss_db_buffer-t_dd04t.
-            ENDIF.
-            CASE i_any2.
-              WHEN 'S'.
-                r_result = ls_dd04t-scrtext_s.
-              WHEN 'L'.
-                r_result = ls_dd04t-scrtext_l.
-              WHEN OTHERS.
-                r_result = ls_dd04t-scrtext_m.
-            ENDCASE.
+          when rtti_type or rtti_type_super.
 
-            IF r_result IS INITIAL.
-              raise('NO_DATA').
-            ENDIF.
+            data: lv_typename       type string,
+                  lv_typename_super type string,
+                  lv_kind           type string.
 
-          WHEN rtti_type OR rtti_type_super.
-
-            DATA: lv_typename       TYPE string,
-                  lv_typename_super TYPE string,
-                  lv_kind           TYPE string.
-
-            rtti( EXPORTING i_any = i_any
-                  IMPORTING
+            rtti( exporting i_any = i_any
+                  importing
                      ev_type       = lv_typename
 *                     ev_type_ddic  = lv_typename_ddic
                      ev_ref_super      = lv_typename_super
@@ -2272,486 +1657,701 @@ endcase.
 
             r_result = lv_typename.
 
-            CASE lv_kind.
-              WHEN cl_abap_datadescr=>kind_ref.
-                IF rtti_type_super = abap_true.
+            case lv_kind.
+              when cl_abap_datadescr=>kind_ref.
+                if rtti_type_super = abap_true.
                   r_result = lv_typename_super.
-                ENDIF.
-            ENDCASE.
-            RETURN.
+                endif.
+            endcase.
+            return.
 
-          WHEN popup_get_value.
+          when popup_get_value.
 
-            DATA: lv_changed TYPE as4flag.
-            DATA: lv_name TYPE string.
+            data: lv_changed type as4flag.
+            data: lv_name type string.
             lv_name = i_any.
-            CALL FUNCTION 'CC_POPUP_STRING_INPUT'
-              EXPORTING
-                property_name = lv_name
-              IMPORTING
-                value_changed = lv_changed
-              CHANGING
-                string_value  = r_result.
 
-            IF sy-ucomm = 'CANCEL'." = abap_true.
-              r_result = cs-s_popup_answer-exit.
-              sy-ucomm = cs-s_popup_answer-exit.
-            ENDIF.
+            if i_any2 is initial.
+              call function 'CC_POPUP_STRING_INPUT'
+                exporting
+                  property_name = lv_name
+                importing
+                  value_changed = lv_changed
+                changing
+                  string_value  = r_result.
 
-*      DATA lo_gui TYPE ty-o_easy_alv.
-*            CREATE OBJECT lo_gui.
-*            lo_gui->gui_popup_get_value(
-*           EXPORTING
-*             iv_title        = i_any
-*             iv_tab_field_1  = ' MDMFDBID-VALUE'
-**            iv_tab_field_1  = 'DD04T-SCRTEXT_L'
-*           IMPORTING
-*             ev_user_cancel  = DATA(lv_is_cancel)
-*             ev_value1       = r_result
-*         ).
-*            IF lv_is_cancel = abap_true.
-*              r_result = cs-s_popup_answer-exit. "raise('ZCX_USER_POPUP_PRESSED_EXIT').
-*            ENDIF.
+              if sy-ucomm = 'CANCEL'." = abap_true.
+                r_result = cs-s_popup_answer-exit.
+*              sy-ucomm = cs-s_popup_answer-exit.
+                x_raise( 'ZCX_USER_CANCEL' ).
+              endif.
+
+            else.
+
+              lcl_help=>gui_popup_get_value(
+                exporting
+                  iv_title       = i_any
+                  iv_tab1        = segment( val = i_any2  sep = '-' index = 1 )
+                  iv_field1      = segment( val = i_any2  sep = '-' index = 2 )
+                importing
+                  ev_user_cancel =  data(lv_is_cancel)
+                  ev_value1      = r_result
+              ).
+
+              if lv_is_cancel = abap_true.
+                x_raise( 'ZCX_USER_CANCEL' ).
+              endif.
+
+            endif.
+
+          when cx_code.
+
+            x_info( exporting ix_root = i_any
+                     importing ev_code = r_result ).
 
 
-          WHEN cx_code.
+          when others.
+            x_raise('ZCX_WRONG_METHOD_CALL').
 
-            cx_info( EXPORTING ix_root = i_any
-                     IMPORTING ev_code = r_result ).
+        endcase.
 
 
-          WHEN OTHERS.
-            raise('CX_WRONG_METHOD_CALL').
-
-        ENDCASE.
+*        IF r_result IS INITIAL.
+*          x_raise('ZCX_NO_DATA').
+*        ENDIF.
 
 
         """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " error handling
 
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
+        data: lx_root type ref to cx_root.
+      catch cx_root into lx_root.
         lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
+    endtry.
 
 
-  ENDMETHOD.
+  endmethod.
 
 
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>GET_BUS
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] VEKP_EXIDV_BY_VENUM            TYPE        ABAP_BOOL(optional)
-* | [--->] VEKP_VENUM_BY_EXIDV            TYPE        ABAP_BOOL(optional)
-* | [--->] MAKT_MAKTX_BY_MATNR            TYPE        ABAP_BOOL(optional)
-* | [--->] MATNR_EXT                      TYPE        ABAP_BOOL(optional)
-* | [--->] MARA_MEINS_BY_MATNR            TYPE        ABAP_BOOL(optional)
-* | [--->] VBAK_VBELN_BY_LIKP_VORG        TYPE        ABAP_BOOL(optional)
-* | [--->] KNA1_NAME1_BY_KUNNR            TYPE        ABAP_BOOL(optional)
-* | [--->] LFA1_NAME1_BY_LIFNR            TYPE        ABAP_BOOL(optional)
-* | [--->] VBPA_KUNNR_BY_VBELN_POS_PARVW  TYPE        ABAP_BOOL(optional)
-* | [--->] IHPA_PARNR_BY_OBJNR_PARVW      TYPE        ABAP_BOOL(optional)
-* | [--->] CSLT_LTEXT_BY_LANG_KOKRS_LSTAR TYPE        ABAP_BOOL(optional)
-* | [--->] USERDETAIL_INFO_BY_PERNR       TYPE        ABAP_BOOL(optional)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_ANY2                         TYPE        ANY(optional)
-* | [--->] I_ANY3                         TYPE        ANY(optional)
-* | [--->] IV_LANGU                       TYPE        ANY (default =SY-LANGU)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] CONV_EXIT                      TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] REFRESH_MEMORY                 TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<-()] R_RESULT                       TYPE        STRING
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD get_bus.
+  method get_bus.
 
     "Business Infos auslesen
     "Bsp venum->exidv, mara-meins, maktx, kunnr usw
-    TRY.
-        CASE abap_true.
+    try.
+        case abap_true.
 
-          WHEN mara_meins_by_matnr.
 
-            DATA ls_mara TYPE mara.
+          when tftit_stext_by_funcname.
+
+            data ls_tftit type tftit.
+            ls_tftit-funcname = get( trim_upper_case = 'X' i_any = i_any ).
+
+            select single *
+            from tftit
+            into ls_tftit
+            where spras = iv_langu
+            and  funcname = ls_tftit-funcname.
+            if sy-subrc <> 0.
+
+              select single *
+              from tftit
+              into ls_tftit
+              where spras = 'E'
+              and  funcname = ls_tftit-funcname.
+              if sy-subrc <> 0.
+
+                select single *
+                from tftit
+                into ls_tftit
+                where spras = 'D'
+                and  funcname = ls_tftit-funcname.
+
+              endif.
+            endif.
+
+            r_result = ls_tftit-stext.
+
+
+          when t100_text_by_no_id.
+
+            data ls_t100 type t100.
+
+            ls_t100-msgnr = get( trim_upper_case = 'X' i_any = i_any ).
+            ls_t100-arbgb = get( trim_upper_case = 'X' i_any = i_any2 ).
+
+            do.
+
+              read table ss_db_buffer-t_t100
+              into ls_t100
+                  with table key
+                  sprsl = iv_langu
+                  arbgb = ls_t100-arbgb
+                  msgnr = ls_t100-msgnr.
+              if sy-subrc = 0.
+                exit.
+              endif.
+
+              select *
+                  from t100
+                  up to 1 rows
+                  into corresponding fields of ls_t100
+                where sprsl = iv_langu
+                 and arbgb = ls_t100-arbgb
+                 and msgnr = ls_t100-msgnr
+                  order by primary key.
+              endselect.
+              if sy-subrc = 0.
+                insert ls_t100 into table ss_db_buffer-t_t100.
+                exit.
+              endif.
+
+              read table ss_db_buffer-t_t100 into ls_t100
+                         with table key
+                  sprsl = 'E'
+                  arbgb = ls_t100-arbgb
+                  msgnr = ls_t100-msgnr.
+              if sy-subrc = 0.
+                exit.
+              endif.
+
+              select *
+              from t100
+              up to 1 rows
+              into corresponding fields of ls_t100
+                 where sprsl = 'E'
+                 and arbgb = ls_t100-arbgb
+                 and msgnr = ls_t100-msgnr
+                 order by primary key.
+              endselect.
+              if sy-subrc = 0.
+                insert ls_t100 into table ss_db_buffer-t_t100.
+                exit.
+              endif.
+
+              if iv_langu = 'D'.
+                exit.
+              endif.
+
+              read table ss_db_buffer-t_t100 into ls_t100
+                     with table key
+                  sprsl = 'D'
+                  arbgb = ls_t100-arbgb
+                  msgnr = ls_t100-msgnr.
+              if sy-subrc = 0.
+                exit.
+              endif.
+
+              select *
+              from t100
+              up to 1 rows
+              into corresponding fields of ls_t100
+                 where sprsl = 'D'
+                 and arbgb = ls_t100-arbgb
+                 and msgnr = ls_t100-msgnr
+                 order by primary key.
+              endselect.
+              if sy-subrc = 0.
+                insert ls_t100 into table ss_db_buffer-t_t100.
+                exit.
+              endif.
+
+              exit.
+            enddo.
+
+            r_result = ls_t100-text.
+
+
+          when dd04t_scrtext_by_rollname_leng.
+
+            data ls_dd04t type dd04t.
+            ls_dd04t-rollname   = get( trim_upper_case = 'X' i_any = i_any ).
+            ls_dd04t-ddlanguage = get( trim_upper_case = 'X' i_any = i_any ).
+
+            read table ss_db_buffer-t_dd04t into ls_dd04t
+               with table key rollname = ls_dd04t-rollname ddlanguage = ls_dd04t-ddlanguage.
+            if sy-subrc <> 0.
+              select  *
+              up to 1 rows
+              from dd04t
+              into ls_dd04t
+              where rollname  = ls_dd04t-rollname
+              and  ddlanguage = iv_langu
+              order by primary key.
+              endselect.
+              insert ls_dd04t into table ss_db_buffer-t_dd04t.
+            endif.
+            case i_any2.
+              when 'S'.
+                r_result = ls_dd04t-scrtext_s.
+              when 'L'.
+                r_result = ls_dd04t-scrtext_l.
+              when others.
+                r_result = ls_dd04t-scrtext_m.
+            endcase.
+
+          when dd01l_convexit_by_domname.
+
+            data ls_dd01l type dd01l.
+            ls_dd01l-domname = get( trim_upper_case = 'X' i_any = i_any ).
+
+            read table ss_db_buffer-t_dd01l into ls_dd01l
+               with table key domname = ls_dd01l-domname.
+
+            if sy-subrc <> 0.
+              select *
+              from dd01l
+              up to 1 rows
+                into ls_dd01l
+              where domname = ls_dd01l-domname
+              order by primary key.
+              endselect.
+
+              "nehmen auch leere werte mit wir das beim nÃ¤chsten mal wissen
+              insert ls_dd01l into table ss_db_buffer-t_dd01l.
+            endif.
+
+            r_result = ls_dd01l-convexit.
+
+
+          when  dd04l_domname_by_rollname
+          or dd04l_leng_by_rollname
+          or dd04l_outputlen_by_rollname.
+
+            data ls_dd04l type dd04l.
+            ls_dd04l-rollname = get( trim_upper_case = 'X' i_any = i_any ).
+
+            read table ss_db_buffer-t_dd04l into ls_dd04l
+               with key rollname = ls_dd04l-rollname.
+
+            if sy-subrc <> 0.
+              select *
+              from dd04l
+              up to 1 rows
+              into ls_dd04l
+              where rollname = ls_dd04l-rollname
+              order by primary key.
+              endselect.
+              "nehmen auch leere werte mit wir das beim nÃ¤chsten mal wissen
+              insert ls_dd04l into table ss_db_buffer-t_dd04l.
+            endif.
+
+            case abap_true.
+              when  dd04l_domname_by_rollname.
+                r_result = ls_dd04l-domname.
+              when dd04l_leng_by_rollname.
+                r_result = ls_dd04l-leng.
+              when dd04l_outputlen_by_rollname.
+                r_result = ls_dd04l-outputlen.
+            endcase.
+
+
+          when dd02t_ddtext_by_tabname.
+
+            data ls_dd02t type dd02t.
+
+            ls_dd02t-tabname = get( trim_upper_case = 'X' i_any = i_any ).
+            ls_dd02t-ddlanguage = iv_langu.
+
+            select tabname ddlanguage ddtext
+              up to 1 rows
+                     from dd02t
+                     into corresponding fields of ls_dd02t
+                     where tabname = ls_dd02t-tabname
+                     and   ddlanguage = ls_dd02t-ddlanguage
+                     order by tabname ddlanguage ddtext.
+            endselect.
+            if sy-subrc <> 0.
+              select tabname ddlanguage ddtext
+              up to 1 rows
+          from dd02t
+          into corresponding fields of ls_dd02t
+          where tabname = r_result
+          and   ddlanguage = 'E'
+          order by tabname ddlanguage ddtext.
+              endselect.
+              if sy-subrc <> 0.
+                select tabname ddlanguage ddtext
+                up to 1 rows
+                    from dd02t
+                into corresponding fields of ls_dd02t
+                    where tabname = r_result
+                and   ddlanguage = 'D'
+                order by tabname ddlanguage ddtext.
+                endselect.
+              endif.
+
+            endif.
+            r_result = ls_dd02t-ddtext.
+
+          when mara_meins_by_matnr.
+
+            data ls_mara type mara.
 
             ls_mara-matnr = i_any.
 
-            READ TABLE ss_db_buffer-t_mara INTO ls_mara
-              WITH KEY matnr = ls_mara-matnr.
-            IF sy-subrc <> 0.
-              SELECT SINGLE matnr meins
-                  FROM mara
-                  INTO CORRESPONDING FIELDS OF ls_mara
-*                WHERE spras = iv_langu
-                  WHERE   matnr = ls_mara-matnr.
-              INSERT ls_mara INTO TABLE ss_db_buffer-t_mara.
-            ENDIF.
+            read table ss_db_buffer-t_mara into ls_mara
+              with key matnr = ls_mara-matnr.
+            if sy-subrc <> 0.
+              select matnr meins
+              up to 1 rows
+                  from mara
+                  into corresponding fields of ls_mara
+                  where   matnr = ls_mara-matnr
+                  order by matnr meins.
+              endselect.
+              insert ls_mara into table ss_db_buffer-t_mara.
+            endif.
 
             r_result = ls_mara-meins.
 
-            raise_check( not_initial = 'X'  i_check1 = r_result
+            x_raise_check( not_initial = 'X'  i_check1 = r_result
                 i_ser_value = get(  json_deep = 'X' i_any =  ls_mara-matnr )
                 i_head      = 'ZCX_READ_DATABASE_MARA_MEINS_ERROR'
             ).
 
-          WHEN cslt_ltext_by_lang_kokrs_lstar.
+          when cslt_ltext_by_lang_kokrs_lstar.
 
-            DATA ls_cslt TYPE cslt.
+            data ls_cslt type cslt.
 
             ls_cslt-spras = i_any.
-            IF ls_cslt-spras IS INITIAL.
+            if ls_cslt-spras is initial.
               ls_cslt-spras = sy-langu.
-            ENDIF.
+            endif.
             ls_cslt-kokrs = i_any2.
             ls_cslt-lstar = i_any3.
 *            objnr = i_any.
 *            ls_cslt-parvw = i_any2.
 *              WITH KEY objnr = ls_ihpa-objnr parvw = ls_ihpa-parvw.
-            READ TABLE ss_db_buffer-t_cslt INTO ls_cslt
-                WITH KEY
+            read table ss_db_buffer-t_cslt into ls_cslt
+                with key
                     spras = ls_cslt-spras
                     kokrs = ls_cslt-kokrs
                     lstar = ls_cslt-lstar.
-            IF sy-subrc <> 0.
-              SELECT SINGLE *
-                FROM cslt
-                INTO ls_cslt
-                WHERE
-                spras = ls_cslt-spras AND
-                kokrs = ls_cslt-kokrs AND
-                lstar = ls_cslt-lstar.
-              INSERT ls_cslt INTO TABLE ss_db_buffer-t_cslt.
-            ENDIF.
+            if sy-subrc <> 0.
+              select *
+              up to 1 rows
+                from cslt
+                into ls_cslt
+                where
+                spras = ls_cslt-spras and
+                kokrs = ls_cslt-kokrs and
+                lstar = ls_cslt-lstar
+                order by primary key.
+              endselect.
+              insert ls_cslt into table ss_db_buffer-t_cslt.
+            endif.
 
             r_result = ls_cslt-ltext.
 
-            raise_check( not_initial = 'X'  i_check1 = r_result
+            x_raise_check( not_initial = 'X'  i_check1 = r_result
                         i_ser_value = get(  json_deep = 'X' i_any = ls_cslt-kokrs i_any2 = ls_cslt-lstar )
                         i_head      = 'ZCX_READ_DATABASE_CSLT_LTEXT_ERROR'
                     ).
 
-          WHEN ihpa_parnr_by_objnr_parvw.
+          when ihpa_parnr_by_objnr_parvw.
 
-            DATA ls_ihpa TYPE ihpa.
+            data ls_ihpa type ihpa.
 
             ls_ihpa-objnr = i_any.
             ls_ihpa-parvw = i_any2.
-            READ TABLE ss_db_buffer-t_ihpa INTO ls_ihpa
-              WITH KEY objnr = ls_ihpa-objnr parvw = ls_ihpa-parvw.
-            IF sy-subrc <> 0.
-              SELECT SINGLE *
-                FROM ihpa
-                INTO ls_ihpa
-                WHERE objnr = ls_ihpa-objnr
-                AND parvw = ls_ihpa-parvw.
-              INSERT ls_ihpa INTO TABLE ss_db_buffer-t_ihpa.
-            ENDIF.
+            read table ss_db_buffer-t_ihpa into ls_ihpa
+              with key objnr = ls_ihpa-objnr parvw = ls_ihpa-parvw counter = '000001'.
+            if sy-subrc <> 0.
+              select single *
+                from ihpa
+                into ls_ihpa
+                where objnr = ls_ihpa-objnr
+                and parvw = ls_ihpa-parvw
+                and counter = '000001'.
+              insert ls_ihpa into table ss_db_buffer-t_ihpa.
+            endif.
 
             r_result = ls_ihpa-parnr.
 
-            raise_check( not_initial = 'X'  i_check1 = r_result
+            x_raise_check( not_initial = 'X'  i_check1 = r_result
                         i_ser_value = get(  json_deep = 'X' i_any = ls_ihpa-objnr i_any2 = ls_ihpa-parvw )
                         i_head      = 'ZCX_READ_DATABASE_IHPA_PARNR_ERROR'
                     ).
 
-          WHEN  userdetail_info_by_pernr.
+          when  userdetail_info_by_pernr.
 
-            DATA lv_uname TYPE xubname.
-            DATA lv_info TYPE string.
-            DATA ls_adress TYPE  bapiaddr3.
-            DATA lt_return TYPE bapiret2_tab.
+            data lv_uname type xubname.
+            data lv_info type string.
+            data ls_adress type  bapiaddr3.
+            data lt_return type bapiret2_tab.
 *              data lt_ret
 
             lv_uname = i_any.
             lv_info = i_any2.
 
-            CALL FUNCTION 'BAPI_USER_GET_DETAIL'
-              EXPORTING
+            call function 'BAPI_USER_GET_DETAIL'
+              exporting
                 username      = lv_uname " User Name
                 cache_results = 'X'    " Temporarily buffer results in work process
-              IMPORTING
+              importing
                 address       = ls_adress  " Address Data
-              TABLES
+              tables
                 return        = lt_return.    " Return Structure
 
-            CASE lv_info.
-              WHEN 'FULLNAME'.
+            case lv_info.
+              when 'FULLNAME'.
                 r_result = ls_adress-fullname.
-            ENDCASE.
+            endcase.
 
 
-          WHEN vekp_exidv_by_venum.
-
-
-
-          WHEN vekp_venum_by_exidv.
+          when vekp_exidv_by_venum.
 
 
 
+          when vekp_venum_by_exidv.
 
-          WHEN makt_maktx_by_matnr.
 
-            DATA ls_makt       TYPE makt.
 
-            FREE ls_makt.
+
+          when makt_maktx_by_matnr.
+
+            data ls_makt       type makt.
+
+            clear ls_makt.
             ls_makt-spras = iv_langu.
             ls_makt-matnr = i_any.
 
-            IF conv_exit = abap_true.
+            if conv_exit = abap_true.
               ls_makt-spras = get( conv_in = 'X' i_any = ls_makt-spras ).
               ls_makt-matnr = get( conv_in = 'X' i_any = ls_makt-matnr ).
-            ENDIF.
+            endif.
 
-            READ TABLE ss_db_buffer-t_makt
-              INTO ls_makt WITH TABLE KEY spras = ls_makt-spras matnr = ls_makt-matnr.
+            read table ss_db_buffer-t_makt
+              into ls_makt with table key spras = ls_makt-spras matnr = ls_makt-matnr.
 
-            IF sy-subrc <> 0 OR refresh_memory = abap_true.
-              SELECT SINGLE *
-                FROM makt
-                INTO CORRESPONDING FIELDS OF ls_makt
-                WHERE spras = iv_langu
-                AND   matnr = i_any.
-              INSERT ls_makt INTO TABLE ss_db_buffer-t_makt.
-            ENDIF.
+            if sy-subrc <> 0 or refresh_memory = abap_true.
+              select single *
+                from makt
+                into corresponding fields of ls_makt
+                where spras = iv_langu
+                and   matnr = i_any.
+              insert ls_makt into table ss_db_buffer-t_makt.
+            endif.
             r_result = ls_makt-maktx.
 
 
-          WHEN matnr_ext.
+          when matnr_ext.
 
-            DATA ls_materialid TYPE materialid.
-            FREE ls_materialid.
+            data ls_materialid type materialid.
+            clear ls_materialid.
             ls_materialid-matnr_int = i_any.
 
-            IF conv_exit = abap_true.
+            if conv_exit = abap_true.
               ls_materialid-matnr_int = get( conv_in = 'X' i_any = ls_materialid-matnr_int ).
-            ENDIF.
+            endif.
 
-            READ TABLE ss_db_buffer-t_materialid
-                INTO ls_materialid WITH TABLE KEY matnr_int = ls_materialid-matnr_int.
+            read table ss_db_buffer-t_materialid
+                into ls_materialid with table key matnr_int = ls_materialid-matnr_int.
 
-            IF sy-subrc <> 0 OR refresh_memory = abap_true.
-              SELECT SINGLE *
-               FROM  materialid
-               INTO  ls_materialid
-               WHERE matnr_int = ls_materialid-matnr_int.
-              INSERT ls_materialid INTO TABLE ss_db_buffer-t_materialid.
-            ENDIF.
+            if sy-subrc <> 0 or refresh_memory = abap_true.
+              select single *
+               from  materialid
+               into  ls_materialid
+               where matnr_int = ls_materialid-matnr_int.
+              insert ls_materialid into table ss_db_buffer-t_materialid.
+            endif.
 
             r_result = ls_materialid-matnr_ext.
 
 
-          WHEN kna1_name1_by_kunnr.
+          when kna1_name1_by_kunnr.
 
-            DATA ls_kna1 TYPE kna1.
+            data ls_kna1 type kna1.
 
-            FREE ls_kna1.
+            clear ls_kna1.
             ls_kna1-kunnr = i_any.
 
-            IF conv_exit = abap_true.
+            if conv_exit = abap_true.
               ls_kna1-kunnr = get( conv_in = 'X' i_any = ls_kna1-kunnr ).
-            ENDIF.
+            endif.
 
-            READ TABLE ss_db_buffer-t_kna1
-                INTO ls_kna1 WITH TABLE KEY kunnr = ls_kna1-kunnr.
+            read table ss_db_buffer-t_kna1
+                into ls_kna1 with table key kunnr = ls_kna1-kunnr.
 
-            IF sy-subrc <> 0 OR refresh_memory = abap_true.
-              SELECT SINGLE  *
-                  FROM kna1
-                  INTO CORRESPONDING FIELDS OF ls_kna1
-                  WHERE kunnr = ls_kna1-kunnr.
-              INSERT ls_kna1 INTO TABLE ss_db_buffer-t_kna1.
-            ENDIF.
+            if sy-subrc <> 0 or refresh_memory = abap_true.
+              select single  *
+                  from kna1
+                  into corresponding fields of ls_kna1
+                  where kunnr = ls_kna1-kunnr.
+              insert ls_kna1 into table ss_db_buffer-t_kna1.
+            endif.
             r_result = ls_kna1-name1.
 
 
-          WHEN lfa1_name1_by_lifnr.
+          when lfa1_name1_by_lifnr.
 
-            DATA ls_lfa1 TYPE lfa1.
+            data ls_lfa1 type lfa1.
 
-            FREE ls_lfa1.
+            clear ls_lfa1.
             ls_lfa1-lifnr = i_any.
 
-            IF conv_exit = abap_true.
+            if conv_exit = abap_true.
               ls_lfa1-lifnr = get( conv_in = 'X' i_any = ls_lfa1-lifnr ).
-            ENDIF.
+            endif.
 
-            READ TABLE ss_db_buffer-t_lfa1
-                INTO ls_lfa1 WITH TABLE KEY lifnr = ls_lfa1-lifnr.
+            read table ss_db_buffer-t_lfa1
+                into ls_lfa1 with table key lifnr = ls_lfa1-lifnr.
 
-            IF sy-subrc <> 0 OR refresh_memory = abap_true.
-              SELECT SINGLE  *
-                  FROM lfa1
-                  INTO CORRESPONDING FIELDS OF ls_lfa1
-                  WHERE lifnr = ls_lfa1-lifnr. "lv_lifnr.
-              INSERT ls_lfa1 INTO TABLE ss_db_buffer-t_lfa1.
-            ENDIF.
+            if sy-subrc <> 0 or refresh_memory = abap_true.
+              select single  *
+                  from lfa1
+                  into corresponding fields of ls_lfa1
+                  where lifnr = ls_lfa1-lifnr. "lv_lifnr.
+              insert ls_lfa1 into table ss_db_buffer-t_lfa1.
+            endif.
             r_result = ls_lfa1-name1.
 
 
-          WHEN OTHERS.
-            raise('CX_WRONG_METHOD_CALL').
+          when others.
+            x_raise('ZCX_WRONG_METHOD_CALL').
 
-        ENDCASE.
+        endcase.
 
-        IF r_result IS INITIAL.
-          raise('CX_NO_DATA').
-        ENDIF.
+        if r_result is initial.
+          x_raise('ZCX_NO_DATA').
+        endif.
 
 
         """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " error handling
 
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
+        data: lx_root type ref to cx_root.
+      catch cx_root into lx_root.
         lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
+    endtry.
 
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>GET_MSG
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] IV_ID                          TYPE        ANY(optional)
-* | [--->] IV_NO                          TYPE        ANY(optional)
-* | [--->] IV_TYPE                        TYPE        ANY(optional)
-* | [--->] IV_V1                          TYPE        ANY(optional)
-* | [--->] IV_V2                          TYPE        ANY(optional)
-* | [--->] IV_V3                          TYPE        ANY(optional)
-* | [--->] IV_V4                          TYPE        ANY(optional)
-* | [--->] IV_LANGU                       TYPE        ANY (default =SY-LANGU)
-* | [--->] USE_T100_ONLY                  TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<-()] R_RESULT                       TYPE        BAPIRET2
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD get_msg.
-
-    "Message erzeugen aus diversen Daten oder Objekten
-    "Bsp Log Objekte, Exceptions, BAPIRET usw.
-    msg(
-      EXPORTING
-        i_any         = i_any
-        iv_id         = iv_id
-        iv_no         = iv_no
-        iv_type       = iv_type
-        iv_v1         = iv_v1
-        iv_v2         = iv_v2
-        iv_v3         = iv_v3
-        iv_v4         = iv_v4
-        use_t100_only = use_t100_only
-        iv_langu      = iv_langu
-        raise_error   = raise_error
-      IMPORTING
-        es_bapi       = r_result ).
-
-  ENDMETHOD.
+  endmethod.
 
 
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>GUI
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] MESSAGE                        TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_T100_SIMPLE              TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_T100                     TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_PRINT                    TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_XML                      TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_JSON                     TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_JSON_DEEP                TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_TAB                      TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_ERROR                    TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_CUST                     TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_BAL_TAB                  TYPE        ABAP_BOOL(optional)
-* | [--->] START_BAL                      TYPE        ABAP_BOOL(optional)
-* | [--->] START_TCODE                    TYPE        ABAP_BOOL(optional)
-* | [--->] START_BROWSER                  TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_ALV_VARI                 TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_SEL_VARI                 TYPE        ABAP_BOOL(optional)
-* | [--->] STATUS                         TYPE        ABAP_BOOL(optional)
-* | [--->] STATUS_PROGRESS                TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_F4_HELP                  TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_F4_HELP_TAB              TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_INFO                     TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_GET_VALUE                TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_CONFIRM                  TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_RANGE                    TYPE        ABAP_BOOL(optional)
-* | [--->] POPUP_CHOOSE                   TYPE        ABAP_BOOL(optional)
-* | [--->] CALL_VIEW                      TYPE        ABAP_BOOL(optional)
-* | [--->] FILE_DOWNLOAD                  TYPE        ABAP_BOOL(optional)
-* | [--->] FILE_UPLOAD                    TYPE        ABAP_BOOL(optional)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_ANY2                         TYPE        ANY(optional)
-* | [--->] I_ANY3                         TYPE        ANY(optional)
-* | [--->] I_ANY4                         TYPE        ANY(optional)
-* | [--->] I_ANY5                         TYPE        ANY(optional)
-* | [--->] I_ANY6                         TYPE        ANY(optional)
-* | [--->] IV_TYPE                        TYPE        ANY(optional)
-* | [--->] IV_TITLE                       TYPE        ANY(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] E_ANY                          TYPE        ANY
-* | [<---] EV_ANSWER                      TYPE        STRING
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD gui.
+  method gui_cfw.
+
+    try.
+
+        case abap_true.
+
+          when get_fcat.
+
+            data lt_fcat type lvc_t_fcat.
+
+            lt_fcat = lcl_help=>cfw_get_fcat( it_table = i_any  ).
+            e_any = lt_fcat.
+
+          when do_suppress_toolbar.
+            cl_abap_list_layout=>suppress_toolbar( ).
+
+        endcase.
+
+
+
+        data lx_root type ref to cx_root.
+      catch cx_root into lx_root.
+        lcl_help=>handle_error( ix_root = lx_root raise_error = raise_error ).
+    endtry.
+  endmethod.
+
+
+  method gui_popup.
 
     "GUI Anzeige für verschiedene Aktionen
     "Bsp Tabellenausgabe, Log Anzeige, Messages, Popup Confirm/Inform usw
-    TRY.
-        IF sy-batch = abap_true.
-          raise('ZCX_GUI_ACTIVE_IN_BATCH_MODE_ERROR').
-        ENDIF.
-        FREE ev_answer.
+    try.
+        if abap_false = check( gui_active = 'X' ).
+          x_raise('ZCX_GUI_ACTIVE_IN_BATCH_MODE_ERROR').
+        endif.
 
-        CASE abap_true.
+        clear ev_answer.
 
-          WHEN popup_cust.
+        case abap_true.
+
+          when msg_error or msg_warning or msg_success or msg_info.
+            data lv_type type string.
+            case abap_true.
+              when msg_error. lv_type = 'E'.
+              when msg_warning. lv_type = 'W'.
+              when msg_success. lv_type = 'S'.
+              when msg_info. lv_type = 'I'.
+            endcase.
+
+            gui_popup( msg( i_any = i_any i_type = lv_type )-s_bapi ).
+
+
+          when selscreen_dyn.
+
+            data lt_where type rsds_twhere.
+            lt_where = lcl_help=>gui_popup_selscreen_dynamic( conv string( i_any ) ).
+            e_any = lt_where.
+
+
+          when get_screenshot.
+
+            data lv_xstring type xstring.
+
+            lv_xstring =  lcl_help=>gui_get_screenshot(  ).
+            e_any = lv_xstring.
+
+          when start_se16n_edit.
+
+            call function 'SE16N_INTERFACE'
+              exporting
+                i_tab         = conv se16n_tab( get( trim_upper_case = 'X' i_any = i_any ) )    " Table
+                i_edit        = 'X'    " Single-Character Indicator
+                i_sapedit     = 'X'    " Single-Character Indicator
+              exceptions
+                error_message = 1
+                others        = 2.
+            x_raise_check( function = 'X' ).
+
+          when selbild.
+
+*            lcl_help=>gui_popup(
+*              selbild = 'X'
+*              i_any   = value sci_atttab(
+*                                ( kind = 'S' text = lcl_help=>get( dd04t = 'X' i_any = 'MATNR' ) ref = ref #(  lr_matnr )  )
+*                                ( kind = 'S' text = lcl_help=>get( dd04t = 'X' i_any = 'DATUM' ) ref = ref #(  lr_date  )  )
+*                        )
+*              ).
+
+
+            data lt_seldata type sci_atttab.
+            lt_seldata = i_any.
+
+            if abap_true = cl_ci_query_attributes=>generic( p_name       = conv #( sy-repid )
+                                                            p_title      = 'Selektionsbild'
+                                                            p_display    = abap_false " abap_true: Anzeige im READONLY-Modus
+                                                            p_attributes = lt_seldata ).
+
+              ev_answer = cs-s_popup_answer-exit.
+            endif.
+
+          when cust.
 
             lcl_help=>popup_cust(  i_any ).
 
-          WHEN message.
-
-            msg(
-               EXPORTING
-                i_any         = i_any
-*                iv_id         = iv_id
-*                iv_no         = iv_no
-                iv_type       = iv_type
-*                iv_v1         = iv_v1
-*                iv_v2         = iv_v2
-*                iv_v3         = iv_v3
-*                iv_v4         = iv_v4
-              IMPORTING
-                es_bapi       = DATA(ls_log)
-            ).
-
-            CASE iv_type.
-              WHEN 'S'.
-                MESSAGE s398(00) WITH
-                   ls_log-message_v1
-                   ls_log-message_v2
-                   ls_log-message_v3
-                   ls_log-message_v4.
-
-            ENDCASE.
-
-          WHEN popup_json_deep.
+          when json_deep.
 
             lcl_help=>popup_json_deep( iv_serial = i_any ).
 
-          WHEN popup_alv_vari.
+          when vari_alv.
 
             lcl_help=>popup_alv_f4(
-              EXPORTING
+              exporting
                 iv_handle = i_any2
                 iv_uname  = i_any2
                 iv_repid  = i_any
-              RECEIVING
+              receiving
                 rv_vari   = e_any
             ).
 
 
-          WHEN file_upload.
+          when file_upload.
             e_any = lcl_help=>gui_upload( use_exceptions = raise_error ).
 
-          WHEN file_download.
+          when file_download.
 
             lcl_help=>gui_download(
         iv_input         = i_any
@@ -2759,135 +2359,86 @@ endcase.
         iv_filter        = i_any3 "'(*.pdf)|*.pdf|'
     ).
 
-          WHEN popup_f4_help_tab.
-            DATA lx_root TYPE REF TO cx_root.
-            TRY.
+          when f4_help_tab.
+            data lx_root type ref to cx_root.
+            try.
                 lcl_help=>popup_f4_help_tab(
-                   EXPORTING
+                   exporting
                      iv_fieldname       = i_any
                      it_table           = i_any2
-                   RECEIVING
+                   receiving
                      rv_result          = e_any ).
-              CATCH cx_root INTO lx_root.
-                CASE get( cx_code = 'X' i_any = lx_root ).
-                  WHEN cs-s_error_code-user_exit.
+              catch cx_root into lx_root.
+                case get( cx_code = 'X' i_any = lx_root ).
+                  when cs-s_error_code-user_exit.
                     ev_answer = cs-s_popup_answer-exit.
-                ENDCASE.
-            ENDTRY.
+                endcase.
+            endtry.
 
-          WHEN status.
-            DATA ls_sy TYPE sy.
-            msg(
-         EXPORTING
-           i_any         = i_any
-*           iv_id         = iv_id
-*           iv_no         = iv_no
-           iv_type       = iv_type
-*           iv_v1         = iv_v1
-*           iv_v2         = iv_v2
-*           iv_v3         = iv_v3
-*           iv_v4         = iv_v4
-*           iv_langu      = iv_langu
-         IMPORTING
-           e_any         = ls_sy ).
 
-            IF ls_sy-msgty CA 'EWSI'.
-            ELSE.
-              ls_sy-msgty = 'I'.
-            ENDIF.
-            MESSAGE ID ls_sy-msgid TYPE 'S' NUMBER ls_sy-msgno
-            WITH ls_sy-msgv1 ls_sy-msgv2 ls_sy-msgv3 ls_sy-msgv4
-            DISPLAY LIKE ls_sy-msgty.
 
-          WHEN status_progress.
+          when f4_help.
 
-            DATA: lv_prozent   TYPE i.
-            DATA lv_text TYPE char100.
+            try.
 
-            lv_prozent = i_any2.
-            lv_text = i_any.
-
-*lv_n_prozent = ( lv_tabix / lv_counter_all ) * 100.
-*lv_prozent   = lv_n_prozent.
-
-            CALL FUNCTION 'SAPGUI_PROGRESS_INDICATOR'
-              EXPORTING
-                percentage = lv_prozent
-                text       = lv_text.
-
-          WHEN popup_f4_help.
-
-            TRY.
-
-                FREE ev_answer.
+                clear ev_answer.
 
                 lcl_help=>popup_f4_help(
-                  EXPORTING
+                  exporting
                     iv_name_search_help = i_any2
                     iv_name_field       = i_any
-                  RECEIVING
+                  receiving
                     rv_resault          = e_any ).
 
-              CATCH cx_root INTO lx_root.
-                CASE get( cx_code = 'X' i_any = lx_root ).
-                  WHEN cs-s_error_code-user_exit.
+              catch cx_root into lx_root.
+                case get( cx_code = 'X' i_any = lx_root ).
+                  when cs-s_error_code-user_exit.
                     ev_answer = cs-s_popup_answer-exit.
-                ENDCASE.
-            ENDTRY.
+                endcase.
+            endtry.
 
-          WHEN popup_json.
-            DATA:
-              lo_alv        TYPE lcl_help=>ty_o_easy_gui.
+          when json.
+            data:
+              lo_alv        type lcl_help=>ty_o_easy_gui.
 
-            CREATE OBJECT lo_alv.
-
-            DATA lr_result TYPE REF TO data.
-
+            create object lo_alv.
 
             lo_alv->popup_json_data(
-              EXPORTING
+              exporting
                 i_any = i_any
-                IMPORTING
+                importing
                     e_any = e_any
                 ).
 
+            return.
 
+          when start_browser.
 
-*            lcl_local_help=>popup_json(  i_any = I_any ).
-*            CALL TRANSFORMATION sjson2html SOURCE XML i_any
-*                                 RESULT XML DATA(html).
-*
-*            cl_abap_browser=>show_html( html_string =
-*            cl_abap_codepage=>convert_from( html ) ).
-            RETURN.
-
-          WHEN start_browser.
-
-            DATA lv_url TYPE c LENGTH 400.
+            data lv_url type c length 400.
             lv_url = i_any.
 
-            CALL FUNCTION 'CALL_BROWSER'
-              EXPORTING
+            call function 'CALL_BROWSER'
+              exporting
                 url                    = lv_url         " URL of Browser Call
 *               window_name            = space         " Under ITS: Name of Browser Target Window
 *               new_window             = space         " Under Win32: Open a New Window
 *               browser_type           = browser_type  " Obsolete: Do Not Use
 *               contextstring          = contextstring " Obsolete: Do Not Use
-              EXCEPTIONS
+              exceptions
                 frontend_not_supported = 1             " Frontend Not Supported
                 frontend_error         = 2             " Error occurred in SAPGUI
                 prog_not_found         = 3             " Program not found or not in executable form
                 no_batch               = 4             " Front-End Function Cannot Be Executed in Backgrnd
                 unspecified_error      = 5             " Unspecified Exception
-                OTHERS                 = 6.
-            IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-            raise_check( function = 'X').
+                others                 = 6.
+            if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+            x_raise_check( function = 'X').
 
-          WHEN start_tcode.
+          when start_tcode.
 
-            IF i_any2 IS INITIAL.
-              RETURN.
-            ENDIF.
+            if i_any2 is initial.
+              return.
+            endif.
 
             lcl_help=>call_transaction(
                 iv_transaction_name = i_any
@@ -2896,2475 +2447,456 @@ endcase.
                 iv_field2_name      = i_any3
                 iv_field3_value     = i_any4 ).
 
-          WHEN popup_range.
+          when range.
 
-            lcl_help=>popup_sel_option(
-               EXPORTING iv_tab   = 'MARA' iv_field = 'MATNR'
-               IMPORTING et_range = e_any ev_cancel = DATA(lv_cancel) ).
+            lcl_help=>popup_range(
+               exporting iv_any  = i_any
+               importing et_range = e_any ev_cancel = data(lv_cancel) ).
 
-          WHEN popup_choose.
+            if lv_cancel = abap_true.
+              x_raise('ZCX_USER_CANCEL').
+            endif.
+
+          when choose.
             lcl_help=>popup_choose(
-              EXPORTING
+              exporting
               iv_title   = iv_title
                 it_choices = i_any
                 i_sel      = i_any2
-              RECEIVING
+              receiving
                 r_result   = e_any ).
-            RETURN.
+            return.
 
-          WHEN popup_print.
-            DATA lt_stringtab TYPE stringtab.
-            trans( EXPORTING print  = 'X' i_any = i_any
-                   IMPORTING  e_result = lt_stringtab ).
-            gui( popup_tab = 'X' i_any = lt_stringtab ).
-            RETURN.
+          when print.
+            data lt_stringtab type string_table.
+            trans( exporting print  = 'X' i_any = i_any
+                   importing  e_result = lt_stringtab ).
+            gui_popup( tab = 'X' i_any = lt_stringtab ).
+            return.
 
-          WHEN popup_error.
-            lcl_help=>popup_exception( i_any ).
-            RETURN.
+          when exception.
+            data(lx_root2) = cast cx_root( i_any ).
+            lcl_help=>gui_popup_exception( lx_root2 ).
+            return.
 
 
-          WHEN popup_tab.
+          when tab.
 
-            IF get(  rtti_kind = 'X' i_any = i_any ) = cl_abap_datadescr=>kind_struct.
+            if get(  rtti_kind = 'X' i_any = i_any ) = cl_abap_datadescr=>kind_struct.
 
-              DATA: lref_data TYPE REF TO data.
-              FIELD-SYMBOLS: <lt_data> TYPE STANDARD TABLE.
+              data: lref_data type ref to data.
+              field-symbols: <lt_data> type standard table.
 
-              CREATE DATA lref_data LIKE TABLE OF i_any.
-              ASSIGN i_any TO <lt_data>.
-              APPEND INITIAL LINE TO <lt_data> ASSIGNING FIELD-SYMBOL(<l_any>).
+              create data lref_data like table of i_any.
+              assign i_any to <lt_data>.
+              append initial line to <lt_data> assigning field-symbol(<l_any>).
               <l_any> = i_any.
               lcl_help=>popup_table( <lt_data> ).
 
-            ELSE.
+            else.
               lcl_help=>popup_table(  i_any ).
-            ENDIF.
-            RETURN.
+            endif.
+            return.
 
-          WHEN popup_t100.
-            DATA lt_bapi TYPE bapiret2_tab.
-            FREE lt_bapi.
-            msg( EXPORTING i_any = i_any IMPORTING et_bapi = lt_bapi  ).
-            lcl_help=>popup_t100_ext(  lt_bapi ).
-            RETURN.
+          when t100_ext.
+            data lt_bapi type bapiret2_tab.
+            clear lt_bapi.
+            lt_bapi = msg( i_any )-t_bapi.
+            lcl_help=>gui_popup_t100_ext(  lt_bapi ).
+            return.
 
-          WHEN popup_t100_simple.
+          when t100.
 
-            FREE lt_bapi.
-            msg( EXPORTING i_any = i_any IMPORTING et_bapi = lt_bapi  ).
-            lcl_help=>popup_t100(  lt_bapi ).
-            RETURN.
+            clear lt_bapi.
+            lt_bapi = msg( i_any  )-t_bapi.
+            lcl_help=>gui_popup_t100(  lt_bapi ).
+            return.
 
-          WHEN popup_xml.
+          when xml.
 
 *            lv_xml = get( xml = 'X' i_any = i_any ).
             lcl_help=>gui_popup_xml( i_any ).
-            RETURN.
+            return.
 
 
-          WHEN call_view.
+          when call_view.
 
-            DATA lv_viewname TYPE tabname.
-            DATA lv_action TYPE c LENGTH 1.
+            data lv_viewname type tabname.
+            data lv_action type c length 1.
 
             lv_viewname = i_any.
-            IF i_any2 IS NOT INITIAL.
+            if i_any2 is not initial.
               lv_action = i_any2.
-            ELSE.
+            else.
               lv_action = 'S'.
-            ENDIF.
+            endif.
 
-            CALL FUNCTION 'VIEW_MAINTENANCE_CALL'
-              EXPORTING
+            call function 'VIEW_MAINTENANCE_CALL'
+              exporting
                 action        = lv_action "'U' " S = Show, U = Update, T = Transport
                 view_name     = lv_viewname
-              EXCEPTIONS
+              exceptions
                 error_message = 1
-                OTHERS        = 2.
-            IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-            raise_check( function = 'X').
+                others        = 2.
+            if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+            x_raise_check( function = 'X').
 
-          WHEN popup_bal_tab.
+          when balm.
             lcl_help=>gui_popup_bal_tab( i_any = i_any ).
-            RETURN.
+            return.
 
-          WHEN start_bal.
+          when balm_list.
+            lcl_help=>gui_popup_bal_list_tab( i_any = i_any ).
+            return.
+
+          when start_bal.
 
             lcl_help=>gui_popup_bal(
                 iv_object    = i_any
                 iv_subobject = i_any2
                 iv_extnumber = i_any3 ).
-            RETURN.
+            return.
 
-
-          WHEN popup_sel_vari.
+          when vari_sel.
 
             e_any = lcl_help=>popup_f4_help_vari_selscreen(
                 iv_repid = i_any  ).
 
-            IF e_any IS INITIAL.
+            if e_any is initial.
               ev_answer = cs-s_popup_answer-exit.
-            ENDIF.
+            endif.
 
-          WHEN popup_info.
-            DATA ls_bapi TYPE bapiret2.
+          when msg.
+            lcl_help=>gui_popup_inform(
+                        msg( i_any = i_any i_type = iv_type )-s_bapi
+                        ).
+            return.
 
-            msg(
-            EXPORTING
-              i_any         = i_any
-*              iv_id         = iv_id
-*              iv_no         = iv_no
-              iv_type       = iv_type
-*              iv_v1         = iv_v1
-*              iv_v2         = iv_v2
-*              iv_v3         = iv_v3
-*              iv_v4         = iv_v4
-*              iv_langu      = iv_langu
-            IMPORTING
-*              e_any        = ls_sy2
-              es_bapi   = ls_bapi
-               ).
-*              et_bapi   = lt_bapi ).
+          when get_value.
 
-*            if ls_sy2-msgty is INITIAL.
-*            ls_sy2-msgty = 'I'.
-*            endif.
+            clear ev_answer.
 
-*            if ls_sy2-msgty <> 'I'.
-**            message ls_bapi-message  type 'I'
-**           MESSAGE ID ls_sy2-msgid TYPE 'I' NUMBER ls_sy2-msgno
-**            WITH ls_sy2-msgv1 ls_sy2-msgv2 ls_sy2-msgv3 ls_sy2-msgv4
-*            DISPLAY LIKE ls_sy2-msgty. "'S'. " INTO lv_dummy.
-*            else.
-*                    message ls_bapi-message  type 'I'.
-**                   MESSAGE ID ls_sy2-msgid TYPE 'I' NUMBER ls_sy2-msgno
-**            WITH ls_sy2-msgv1 ls_sy2-msgv2 ls_sy2-msgv3 ls_sy2-msgv4.
-**            DISPLAY LIKE ls_sy2-msgty. "'S'. " INTO lv_dummy.
-*            endif.
-            lcl_help=>gui_popup_inform( ls_bapi ).
-            RETURN.
+            data: lv_is_cancel type abap_bool,
+                  lv_tab1      type string,
+                  lv_field1    type string.
 
-          WHEN popup_get_value.
-
-
-            FREE ev_answer.
-
-            DATA: lv_is_cancel TYPE abap_bool,
-                  lv_tab1      TYPE string,
-                  lv_field1    TYPE string.
-            SPLIT i_any AT '-' INTO lv_tab1 lv_field1.
+*            split i_any at '-' into lv_tab1 lv_field1.
+            lv_tab1   = segment( val = i_any sep = '-' index = 1 ).
+            lv_field1 = segment( val = i_any sep = '-' index = 2 ).
 
             lcl_help=>gui_popup_get_value(
-              EXPORTING
+              exporting
                 iv_title       = i_any2
                 iv_tab1        = lv_tab1
                 iv_field1      = lv_field1
-              IMPORTING
+              importing
                 ev_user_cancel = lv_is_cancel
                 ev_value1      = e_any ).
 
-            IF lv_is_cancel = abap_true.
+            if lv_is_cancel = abap_true.
               ev_answer = cs-s_popup_answer-exit.
-            ELSE.
+            else.
 *              e_any = lv_value.
-            ENDIF.
+            endif.
 
 
-          WHEN popup_confirm.
+          when confirm.
 
-*            DATA ls_bapi TYPE bapiret2.
-            DATA lv_answer TYPE abap_bool.
-
-            ls_bapi =  get_msg(
-                  i_any         = i_any
-*                  iv_id         = iv_id
-*                  iv_no         = iv_no
-                  iv_type       = iv_type
-*                  iv_v1         = iv_v1
-*                  iv_v2         = iv_v2
-*                  iv_v3         = iv_v3
-*                  iv_v4         = iv_v4
-*                  iv_langu      = iv_langu
-                  ).
-
-            lv_answer =  lcl_help=>gui_popup_confirm( is_bapi = ls_bapi ).
-
-            IF lv_answer = abap_true.
-              ev_answer = cs-s_popup_answer-yes.
-            ELSE.
-              ev_answer = cs-s_popup_answer-no.
-            ENDIF.
+            ev_answer = switch #( lcl_help=>gui_popup_confirm( msg( i_any = i_any i_type = iv_type )-s_bapi )
+                            when abap_true  then cs-s_popup_answer-yes
+                            when abap_false then cs-s_popup_answer-no ).
 
             "herausfinden was die beste AnzeigemÃ¶glichkeit ist...
-          WHEN OTHERS.
+          when others.
 
-            CASE get( rtti_kind = 'X' i_any = i_any ). .
+            case get( rtti_kind = 'X' i_any = i_any ). .
 
-              WHEN cl_abap_datadescr=>kind_ref.
+              when cl_abap_datadescr=>kind_elem.
+*              try.
+                gui_popup( msg_info = 'X' i_any = conv string( i_any ) ).
+*              catch cx_root.
+*              endtry.
 
-                IF abap_true = check( castable = 'X' i_any = 'CX_ROOT' i_any2 = i_any ).
-                  gui( popup_error = 'X' i_any = i_any ).
-                  RETURN.
-                ENDIF.
+              when cl_abap_datadescr=>kind_ref.
 
-              WHEN cl_abap_datadescr=>kind_struct OR cl_abap_datadescr=>kind_table.
+                if abap_true = check( castable = 'X' i_any = 'CX_ROOT' i_any2 = i_any ).
+                  gui_popup( exception = 'X' i_any = i_any ).
+                  return.
+                endif.
 
-                CASE get( rtti_type = 'X' i_any = i_any ).
+                data lo_bal type ty-o_easy_abap.
+                try.
+                    lo_bal ?= i_any.
+                    gui_popup( lo_bal->ms-t_bal ).
+                  catch cx_root.
+                endtry.
 
-                  WHEN 'BALM_T'.
+              when cl_abap_datadescr=>kind_struct.
 
-                    gui( popup_bal_tab = 'X' i_any = i_any ).
-                    RETURN.
+                data(ls_bapi) = msg( i_any )-s_bapi.
 
-                  WHEN OTHERS.
-                    TRY.
+                if ls_bapi is initial.
+
+                  data lr_data type ref to data.
+                  create data lr_data like table of i_any.
+                  field-symbols <lt_table> type standard table.
+                  assign lr_data->* to <lt_table>.
+                  insert i_any into table <lt_table>.
+                  gui_popup( <lt_table> ).
+                  return.
+
+                else.
+
+                  gui_popup( t100 = 'X' i_any = i_any ).
+
+                endif.
+
+              when cl_abap_datadescr=>kind_table.
+
+                case get( rtti_type_line = 'X' i_any = i_any ).
+
+                  when 'BALM'.
+
+                    gui_popup( balm = 'X' i_any = i_any ).
+                    return.
+
+                  when 'BALHDR'.
+                    gui_popup( balm_list = 'X' i_any = i_any ).
+                    return.
+
+                  when others.
+                    try.
                         msg( use_t100_only = abap_true raise_error = abap_true i_any = i_any ).
-                        gui(  popup_t100_simple = 'X' i_any = i_any ).
-                      CATCH cx_no_check.
-                        gui( popup_tab = 'X' i_any = i_any ).
-                    ENDTRY.
-                    RETURN.
+                        gui_popup(  t100 = 'X' i_any = i_any ).
+                      catch cx_no_check.
+                        gui_popup( tab = 'X' i_any = i_any ).
+                    endtry.
+                    return.
 
-                ENDCASE.
+                endcase.
 
-            ENDCASE.
-
-
-
-            msg(
-             EXPORTING
-               i_any         = i_any
-*               iv_id         = iv_id
-*               iv_no         = iv_no
-               iv_type       = iv_type
-*               iv_v1         = iv_v1
-*               iv_v2         = iv_v2
-*               iv_v3         = iv_v3
-*               iv_v4         = iv_v4
-*               iv_langu      = iv_langu
-             IMPORTING
-               e_any         = ls_sy ).
-
-            IF ls_sy-msgty CA 'EWSI'.
-            ELSE.
-              ls_sy-msgty = 'I'.
-            ENDIF.
-            MESSAGE ID ls_sy-msgid TYPE ls_sy-msgty NUMBER ls_sy-msgno
-            WITH ls_sy-msgv1 ls_sy-msgv2 ls_sy-msgv3 ls_sy-msgv4.
+            endcase.
 
 
-        ENDCASE.
+*
+*            msg(
+*             exporting
+*               i_any         = i_any
+**               iv_id         = iv_id
+**               iv_no         = iv_no
+*               iv_type       = iv_type
+**               iv_v1         = iv_v1
+**               iv_v2         = iv_v2
+**               iv_v3         = iv_v3
+**               iv_v4         = iv_v4
+**               iv_langu      = iv_langu
+*             importing
+*               e_any         = ls_sy ).
+*
+*            if ls_sy-msgty ca 'EWSI'.
+*            else.
+*              ls_sy-msgty = 'I'.
+*            endif.
+*            message id ls_sy-msgid type ls_sy-msgty number ls_sy-msgno
+*            with ls_sy-msgv1 ls_sy-msgv2 ls_sy-msgv3 ls_sy-msgv4.
+
+
+        endcase.
 
 
         """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " error handling
 
-      CATCH cx_root INTO lx_root.
+      catch cx_root into lx_root.
         lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>INFO
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] IV_DEPTH                       TYPE        ANY(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] EV_DATE                        TYPE        CLIKE
-* | [<---] EV_TIME                        TYPE        CLIKE
-* | [<---] EV_TIMESTAMPL                  TYPE        TIMESTAMPL
-* | [<---] EV_TIME_ISO8601                TYPE        CLIKE
-* | [<---] EV_TIME_WRITE                  TYPE        STRING
-* | [<---] EV_DATE_WRITE                  TYPE        STRING
-* | [<---] EV_USERNAME                    TYPE        STRING
-* | [<---] EV_IP_ADRESS                   TYPE        STRING
-* | [<---] EV_IS_GUI_ACTIVE               TYPE        ABAP_BOOL
-* | [<---] EV_SY_MSGTEXT                  TYPE        STRING
-* | [<---] ES_CALLSTACK                   TYPE        ABAP_CALLSTACK_LINE
-* | [<---] ET_CALLSTACK                   TYPE        ABAP_CALLSTACK
-* | [<---] EV_REPID                       TYPE        CLIKE
-* | [<---] EV_METHOD                      TYPE        CLIKE
-* | [<---] ET_DEQUEUE_TABLE               TYPE        WLF_SEQG3_TAB
-* | [<---] EV_WORK_PROCESS_ID             TYPE        STRING
-* | [<---] ET_SOURCE_CODE                 TYPE        STRINGTAB
-* | [<---] EV_LOG_INFO                    TYPE        STRING
-* | [<---] E_MOCK                         TYPE        ANY
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD info.
-
-    " diese Methode ermittelt diverse Informationen
-
-    FREE es_callstack.
-    FREE ev_log_info.
-    FREE et_callstack.
-    FREE ev_method.
-    FREE ev_work_process_id.
-    FREE ev_repid.
-
-    TRY.
-
-        IF ev_date IS SUPPLIED
-        OR ev_time IS SUPPLIED
-        OR ev_timestampl IS SUPPLIED
-        OR ev_time_iso8601 IS SUPPLIED.
-
-          GET TIME STAMP FIELD ev_timestampl.
-          CONVERT TIME STAMP ev_timestampl
-          TIME ZONE sy-zonlo
-          INTO DATE ev_date
-          TIME ev_time.
-
-          IF ev_time_iso8601 IS SUPPLIED.
-            "20171028163427.1811670
-            "2017-05-31T23:59:59
-
-            DATA:
-                    lv_time_string TYPE char200.
-
-            lv_time_string =  ev_timestampl.
-            SHIFT lv_time_string LEFT DELETING LEADING ' '.
-            CONCATENATE
-            lv_time_string(4) '-' lv_time_string+4(2) '-' lv_time_string+6(2) 'T'
-            ev_time(2) ':' ev_time+2(2) ':'  ev_time+4(2) lv_time_string+14(7)
-             INTO lv_time_string.
-
-            ev_time_iso8601 = lv_time_string.
-*        SHIFT iv_date_time LEFT DELETING LEADING ' '.
-*        CONCATENATE iv_date_time(4)  iv_date_time+5(2)  iv_date_time+8(2)     INTO lv_date.
-*        CONCATENATE iv_date_time+11(2) iv_date_time+14(2) iv_date_time+17(2) INTO lv_time.
-          ENDIF.
-
-
-        ENDIF.
-
-        IF e_mock IS SUPPLIED.
-
-          lcl_help=>mock_data( IMPORTING e_mock = e_mock ).
-
-        ENDIF.
-
-        DATA: lv_char20 TYPE char20.
-
-        IF ev_date_write IS SUPPLIED.
-          WRITE sy-datum TO lv_char20.
-          ev_date_write = lv_char20.
-        ENDIF.
-
-        IF ev_time_write IS SUPPLIED.
-          WRITE sy-uzeit TO lv_char20.
-          ev_time_write = lv_char20.
-        ENDIF.
-
-        """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        IF ev_is_gui_active IS SUPPLIED.
-
-          DATA:
-        lv_gui TYPE char1.
-
-          ev_is_gui_active = abap_false.
-
-          IF sy-batch = abap_false
-            AND sy-binpt = abap_false.
-
-            CALL FUNCTION 'RFC_IS_GUI_ON'
-              IMPORTING
-                on = lv_gui.
-
-            IF lv_gui = 'Y'.
-              ev_is_gui_active = abap_true.
-            ENDIF.
-          ENDIF.
-        ENDIF.
-
-        IF ev_work_process_id IS SUPPLIED.
-
-          DATA:
-            lv_wp_no TYPE wpno.
-
-          CALL FUNCTION 'TH_GET_OWN_WP_NO'
-            IMPORTING
-*             subrc =     " Return Code of the Function Module
-              wp_no = lv_wp_no    " Separate Work Process Number
-*             wp_pid   =     " PID of Separate Work Process
-*             wp_index =
-            .
-          ev_work_process_id = lv_wp_no.
-
-        ENDIF.
-
-
-        IF ev_username IS SUPPLIED.
-          ev_username = sy-uname.
-        ENDIF.
-
-        """""""""""""""""""""""""""""""
-        IF es_callstack IS SUPPLIED OR et_callstack IS SUPPLIED OR et_source_code IS SUPPLIED
-            OR ev_repid IS SUPPLIED OR ev_method IS SUPPLIED.
-
-          CALL FUNCTION 'SYSTEM_CALLSTACK'
-            EXPORTING
-              max_level = '0'
-            IMPORTING
-              callstack = et_callstack.
-
-          "delete this method
-          DELETE et_callstack INDEX 1.
-          IF iv_depth IS NOT INITIAL.
-            DATA: lv_count TYPE i.
-            lv_count = iv_depth.
-            DO lv_count TIMES.
-              DELETE et_callstack INDEX 1.
-            ENDDO.
-          ENDIF.
-
-          READ TABLE et_callstack INTO es_callstack
-              INDEX 1.
-
-          ev_repid = es_callstack-mainprogram.
-          ev_method = es_callstack-blockname.
-
-        ENDIF.
-
-        IF et_source_code IS SUPPLIED.
-
-          DATA:
-            lo_wb_source    TYPE REF TO cl_wb_source,
-            lv_name_program TYPE trdir-name.
-
-          lv_name_program = es_callstack-include. "iv_name_program.
-
-          CREATE OBJECT lo_wb_source
-            EXPORTING
-              source_name = lv_name_program.    " physical name.
-
-
-          lo_wb_source->read_source(
-            IMPORTING
-              source_tab = et_source_code "Source Code
-            EXCEPTIONS
-              cancelled                     = 1
-              not_found                     = 2
-              read_protected                = 3
-              enhancement_locked            = 4
-              OTHERS                        = 6 ).
-          IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-
-        ENDIF.
-
-
-        IF et_dequeue_table IS SUPPLIED.
-
-          et_dequeue_table =  lcl_help=>lock_get_snap( ).
-
-        ENDIF.
-
-
-
-
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " error handling
-
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>ITAB
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] DELETE_DUPLICATES              TYPE        ABAP_BOOL(optional)
-* | [--->] CHANGE_SEQUENCE                TYPE        ABAP_BOOL(optional)
-* | [--->] MOVE_CORRESPONDING             TYPE        ABAP_BOOL(optional)
-* | [--->] MERGE                          TYPE        ABAP_BOOL(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<-->] CT_TAB                         TYPE        STANDARD TABLE
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD itab.
-
-    TRY.
-
-        FIELD-SYMBOLS:
-          <ls_tab>    TYPE any,
-          <ls_tab_in> TYPE any,
-          <lt_result> TYPE STANDARD TABLE.
-
-        DATA:
-          lt_r_tab TYPE REF TO data.
-
-        CREATE DATA lt_r_tab
-         LIKE ct_tab.
-
-        ASSIGN lt_r_tab->* TO <lt_result>.
-
-
-        CASE abap_true.
-
-          WHEN change_sequence.
-
-            WHILE ct_tab IS NOT INITIAL.
-              APPEND INITIAL LINE TO <lt_result> ASSIGNING <ls_tab>.
-
-              READ TABLE ct_tab ASSIGNING <ls_tab_in>
-               INDEX lines( ct_tab ).
-              <ls_tab> = <ls_tab_in>.
-
-              DELETE ct_tab INDEX lines( ct_tab ).
-            ENDWHILE.
-
-
-          WHEN delete_duplicates.
-
-            SORT ct_tab.
-            DELETE ADJACENT DUPLICATES FROM ct_tab COMPARING ALL FIELDS.
-            <lt_result> = ct_tab.
-
-          WHEN OTHERS.
-            raise('CX_WRONG_CALL_OF_METHOD').
-        ENDCASE.
-
-
-        FREE ct_tab.
-        ct_tab = <lt_result>.
-
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " error handling
-
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>JSON
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] JSON_2                         TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_ANY2                         TYPE        ANY(optional)
-* | [--->] I_ANY3                         TYPE        ANY(optional)
-* | [--->] I_ANY4                         TYPE        ANY(optional)
-* | [--->] I_ANY5                         TYPE        ANY(optional)
-* | [--->] IT_R_DATA                      TYPE        TY-T_REF_DATA(optional)
-* | [--->] IT_R_OBJECT                    TYPE        TY-T_REF_OBJ(optional)
-* | [<---] E_ANY1                         TYPE        ANY
-* | [<---] E_ANY2                         TYPE        ANY
-* | [<---] E_ANY3                         TYPE        ANY
-* | [<---] E_ANY4                         TYPE        ANY
-* | [<---] E_ANY5                         TYPE        ANY
-* | [<---] E_REF1                         TYPE        ANY
-* | [<---] E_TYPE1                        TYPE        ANY
-* | [<---] E_KIND1                        TYPE        ANY
-* | [<---] E_REF2                         TYPE        ANY
-* | [<---] E_TYPE2                        TYPE        ANY
-* | [<---] E_KIND2                        TYPE        ANY
-* | [<---] E_REF3                         TYPE        ANY
-* | [<---] E_TYPE3                        TYPE        ANY
-* | [<---] E_KIND3                        TYPE        ANY
-* | [<---] E_REF4                         TYPE        ANY
-* | [<---] E_TYPE4                        TYPE        ANY
-* | [<---] E_KIND4                        TYPE        ANY
-* | [<---] E_REF5                         TYPE        ANY
-* | [<---] E_TYPE5                        TYPE        ANY
-* | [<---] E_KIND5                        TYPE        ANY
-* | [<---] ET_R_DATA                      TYPE        TY-T_REF_DATA
-* | [<---] ET_R_OBJECT                    TYPE        TY-T_REF_OBJ
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD json.
-
-    DATA lt_tab TYPE STANDARD TABLE OF string.
-    DATA lv_json_line TYPE string.
-    DATA lv_type TYPE string.
-    DATA lv_kind TYPE string.
-    FIELD-SYMBOLS <any> TYPE any.
-
-    IF abap_true = json_2.
-
-      IF i_any IS INITIAL.
-        raise('ZCX_INPUT_DATA_IS_INITIAL_ERROR').
-      ENDIF.
-
-      trans(
-        EXPORTING
-          json_2             = 'X'
-          i_any              = i_any
-        IMPORTING
-          e_result           = lt_tab
-      ).
-
-      FREE lv_json_line.
-      IF e_any1 IS SUPPLIED OR e_ref1 IS SUPPLIED OR e_type1 IS SUPPLIED OR e_kind1 IS SUPPLIED.
-        READ TABLE lt_tab INTO lv_json_line
-            INDEX 1.
-        raise_check(  read_table = 'X' ).
-
-        READ TABLE lt_tab INTO lv_kind
-      INDEX 2.
-        raise_check(  read_table = 'X' ).
-        READ TABLE lt_tab INTO lv_type
-            INDEX 3.
-        raise_check(  read_table = 'X' ).
-
-        e_type1 = lv_type.
-        e_kind1 = lv_kind.
-
-        IF e_any1 IS SUPPLIED.
-
-          trans(
-    EXPORTING
-      json_2             = 'X'
-      i_any              = lv_json_line
-    IMPORTING
-      e_result           = e_any1
-  ).
-
-        ENDIF.
-
-        IF e_ref1 IS SUPPLIED.
-          CASE lv_kind.
-
-            WHEN cl_abap_datadescr=>kind_ref.
-
-              trans(
-                  EXPORTING
-                      json_2 = 'X'
-                      i_any  = lv_json_line
-                  IMPORTING
-                      e_result = e_ref1
-                          ).
-
-            WHEN OTHERS.
-
-              CREATE DATA e_ref1
-                TYPE (lv_type).
-
-              ASSIGN e_ref1->* TO <any>.
-
-              trans(
-               EXPORTING
-                 json_2             = 'X'
-                 i_any              = lv_json_line
-               IMPORTING
-                 e_result           = <any>
-             ).
-
-          ENDCASE.
-
-        ENDIF.
-
-      ENDIF.
-
-      FREE lv_json_line.
-      IF e_any2 IS SUPPLIED OR e_ref2 IS SUPPLIED OR e_type2 IS SUPPLIED OR e_kind2 IS SUPPLIED..
-        READ TABLE lt_tab INTO lv_json_line
-            INDEX 4.
-        raise_check(  read_table = 'X' ).
-
-        READ TABLE lt_tab INTO lv_kind
-      INDEX 5.
-        raise_check(  read_table = 'X' ).
-        READ TABLE lt_tab INTO lv_type
-            INDEX 6.
-        raise_check(  read_table = 'X' ).
-
-        e_type2 = lv_type.
-        e_kind2 = lv_kind.
-
-        IF e_any2 IS SUPPLIED.
-
-          trans(
-    EXPORTING
-      json_2             = 'X'
-      i_any              = lv_json_line
-    IMPORTING
-      e_result           = e_any2
-  ).
-
-        ENDIF.
-
-        IF e_ref2 IS SUPPLIED.
-          CASE lv_kind.
-
-            WHEN cl_abap_datadescr=>kind_ref.
-
-              trans(
-                  EXPORTING
-                      json_2 = 'X'
-                      i_any  = lv_json_line
-                  IMPORTING
-                      e_result = e_ref2
-                          ).
-
-            WHEN OTHERS.
-
-              CREATE DATA e_ref2
-                TYPE (lv_type).
-
-              ASSIGN e_ref2->* TO <any>.
-
-              trans(
-               EXPORTING
-                 json_2             = 'X'
-                 i_any              = lv_json_line
-               IMPORTING
-                 e_result           = <any>
-             ).
-
-          ENDCASE.
-
-        ENDIF.
-
-      ENDIF.
-
-      FREE lv_json_line.
-      IF e_any3 IS SUPPLIED OR e_ref3 IS SUPPLIED OR e_type3 IS SUPPLIED OR e_kind3 IS SUPPLIED.
-        READ TABLE lt_tab INTO lv_json_line
-            INDEX 7.
-        raise_check(  read_table = 'X' ).
-
-        READ TABLE lt_tab INTO lv_kind
-      INDEX 8.
-        raise_check(  read_table = 'X' ).
-        READ TABLE lt_tab INTO lv_type
-            INDEX 9.
-        raise_check(  read_table = 'X' ).
-
-        e_type3 = lv_type.
-        e_kind3 = lv_kind.
-
-        IF e_any3 IS SUPPLIED.
-
-          trans(
-    EXPORTING
-      json_2             = 'X'
-      i_any              = lv_json_line
-    IMPORTING
-      e_result           = e_any3
-  ).
-
-        ENDIF.
-
-        IF e_ref3 IS SUPPLIED.
-          CASE lv_kind.
-
-            WHEN cl_abap_datadescr=>kind_ref.
-
-              trans(
-                  EXPORTING
-                      json_2 = 'X'
-                      i_any  = lv_json_line
-                  IMPORTING
-                      e_result = e_ref3
-                          ).
-
-            WHEN OTHERS.
-
-              CREATE DATA e_ref3
-                TYPE (lv_type).
-
-              ASSIGN e_ref3->* TO <any>.
-
-              trans(
-               EXPORTING
-                 json_2             = 'X'
-                 i_any              = lv_json_line
-               IMPORTING
-                 e_result           = <any>
-             ).
-
-          ENDCASE.
-        ENDIF.
-      ENDIF.
-
-
-      FREE lv_json_line.
-      IF e_any4 IS SUPPLIED OR e_ref4 IS SUPPLIED OR e_type4 IS SUPPLIED OR e_kind4 IS SUPPLIED..
-        READ TABLE lt_tab INTO lv_json_line
-            INDEX 10.
-        raise_check(  read_table = 'X' ).
-
-        READ TABLE lt_tab INTO lv_kind
-      INDEX 11.
-        raise_check(  read_table = 'X' ).
-        READ TABLE lt_tab INTO lv_type
-            INDEX 12.
-        raise_check(  read_table = 'X' ).
-
-        e_type4 = lv_type.
-        e_kind4 = lv_kind.
-
-        IF e_any4 IS SUPPLIED.
-
-          trans(
-    EXPORTING
-      json_2             = 'X'
-      i_any              = lv_json_line
-    IMPORTING
-      e_result           = e_any4
-  ).
-
-        ENDIF.
-
-        IF e_ref4 IS SUPPLIED.
-          CASE lv_kind.
-
-            WHEN cl_abap_datadescr=>kind_ref.
-
-              trans(
-                  EXPORTING
-                      json_2 = 'X'
-                      i_any  = lv_json_line
-                  IMPORTING
-                      e_result = e_ref4
-                          ).
-
-            WHEN OTHERS.
-
-              CREATE DATA e_ref4
-                TYPE (lv_type).
-
-              ASSIGN e_ref4->* TO <any>.
-
-              trans(
-               EXPORTING
-                 json_2             = 'X'
-                 i_any              = lv_json_line
-               IMPORTING
-                 e_result           = <any>
-             ).
-
-          ENDCASE.
-
-        ENDIF.
-
-      ENDIF.
-
-      FREE lv_json_line.
-      IF e_any5 IS SUPPLIED OR e_ref5 IS SUPPLIED OR e_type5 IS SUPPLIED OR e_kind5 IS SUPPLIED..
-        READ TABLE lt_tab INTO lv_json_line
-            INDEX 13.
-        raise_check(  read_table = 'X' ).
-
-        READ TABLE lt_tab INTO lv_kind
-      INDEX 14.
-        raise_check(  read_table = 'X' ).
-        READ TABLE lt_tab INTO lv_type
-            INDEX 15.
-        raise_check(  read_table = 'X' ).
-
-        e_type5 = lv_type.
-        e_kind5 = lv_kind.
-
-        IF e_any5 IS SUPPLIED.
-
-          trans(
-    EXPORTING
-      json_2             = 'X'
-      i_any              = lv_json_line
-    IMPORTING
-      e_result           = e_any5
-  ).
-
-        ENDIF.
-
-        IF e_ref5 IS SUPPLIED.
-          CASE lv_kind.
-
-            WHEN cl_abap_datadescr=>kind_ref.
-
-              trans(
-                  EXPORTING
-                      json_2 = 'X'
-                      i_any  = lv_json_line
-                  IMPORTING
-                      e_result = e_ref5
-                          ).
-
-            WHEN OTHERS.
-
-              CREATE DATA e_ref5
-                TYPE (lv_type).
-
-              ASSIGN e_ref5->* TO <any>.
-
-              trans(
-               EXPORTING
-                 json_2             = 'X'
-                 i_any              = lv_json_line
-               IMPORTING
-                 e_result           = <any>
-             ).
-
-          ENDCASE.
-
-        ENDIF.
-
-      ENDIF.
-
-
-    ELSE.
-
-      INSERT get( json = 'X' i_any = i_any ) INTO TABLE lt_tab.
-      INSERT get( rtti_kind = 'X' i_any = i_any ) INTO TABLE lt_tab.
-      INSERT get( rtti_type = 'X' i_any = i_any ) INTO TABLE lt_tab.
-
-      INSERT get( json = 'X' i_any = i_any2 ) INTO TABLE lt_tab.
-      INSERT get( rtti_kind = 'X' i_any = i_any2 ) INTO TABLE lt_tab.
-      INSERT get( rtti_type = 'X' i_any = i_any2 ) INTO TABLE lt_tab.
-
-      INSERT get( json = 'X' i_any = i_any3 ) INTO TABLE lt_tab.
-      INSERT get( rtti_kind = 'X' i_any = i_any3 ) INTO TABLE lt_tab.
-      INSERT get( rtti_type = 'X' i_any = i_any3 ) INTO TABLE lt_tab.
-
-      INSERT get( json = 'X' i_any = i_any4 ) INTO TABLE lt_tab.
-      INSERT get( rtti_kind = 'X' i_any = i_any4 ) INTO TABLE lt_tab.
-      INSERT get( rtti_type = 'X' i_any = i_any4 ) INTO TABLE lt_tab.
-
-      INSERT get( json = 'X' i_any = i_any5 ) INTO TABLE lt_tab.
-      INSERT get( rtti_kind = 'X' i_any = i_any5 ) INTO TABLE lt_tab.
-      INSERT get( rtti_type = 'X' i_any = i_any5 ) INTO TABLE lt_tab.
-
-      e_any1 = get( json = 'X' i_any = lt_tab ).
-
-    ENDIF.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>LOCK
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] SET                            TYPE        ABAP_BOOL(optional)
-* | [--->] FREE                           TYPE        ABAP_BOOL(optional)
-* | [--->] SET_SNAP                       TYPE        ABAP_BOOL(optional)
-* | [--->] IS_SET                         TYPE        ABAP_BOOL(optional)
-* | [--->] A_COLLECT                      TYPE        ABAP_BOOL(optional)
-* | [--->] SET_COLLECT                    TYPE        ABAP_BOOL(optional)
-* | [--->] FREE_COLLECT                   TYPE        ABAP_BOOL(optional)
-* | [--->] I_OBJECT                       TYPE        ANY(optional)
-* | [--->] IV_MODE                        TYPE        ANY (default ='E')
-* | [--->] IV_SCOPE                       TYPE        ANY (default ='2')
-* | [--->] IV_UNAME                       TYPE        ANY (default =SY-UNAME)
-* | [--->] I_ANY                          TYPE        ANY (default =SY-MANDT)
-* | [--->] I_ANY2                         TYPE        ANY(optional)
-* | [--->] I_ANY3                         TYPE        ANY(optional)
-* | [--->] I_ANY4                         TYPE        ANY(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] ET_SNAP                        TYPE        WLF_SEQG3_TAB
-* | [<---] EV_IS_SET                      TYPE        ABAP_BOOL
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD lock.
-
-    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    " Diese Methode setzt,lÃ¶st, sammelt Sperren
-    " snapshot = alle aktuell vorhandenen Sperren
-    "
-    " Scope = 1 -> sperre wird durch commit gelÃ¶st
-    " Scope = 2 -> rollback lÃ¶st auf, commit nicht
-    " Scope = 3 ->
-    "
-    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-    DATA: lv_any  TYPE string, lv_any2 TYPE string, lv_any3 TYPE string, lv_any4 TYPE string.
-
-
-
-    TRY.
-
-        IF et_snap IS SUPPLIED.
-          FREE et_snap.
-          info( IMPORTING  et_dequeue_table   = et_snap ).
-        ENDIF.
-
-        CASE abap_true.
-
-          WHEN set_snap.
-
-            lcl_help=>lock_set_snap( it_snap = i_any ).
-
-
-          WHEN set.
-
-            lv_any = i_any.
-            lv_any2 = i_any2.
-            lv_any3 = i_any3.
-            lv_any4 = i_any4.
-
-            lcl_help=>lock_set(
-              EXPORTING
-                iv_val1        = lv_any
-                iv_val2        = lv_any2
-                iv_val3        = lv_any3
-                iv_val4        = lv_any4
-                iv_lock        = i_object
-                iv_mode        = iv_mode
-                iv_scope       = iv_scope
-                iv_is_collect  = a_collect ).
-
-
-          WHEN free.
-
-            lv_any = i_any.
-            lv_any2 = i_any2.
-            lv_any3 = i_any3.
-            lv_any4 = i_any4.
-
-            lcl_help=>lock_free(
-              EXPORTING
-                iv_val1       = lv_any
-                iv_val2       = lv_any2
-                iv_val3       = lv_any3
-                iv_val4       = lv_any4
-                iv_lock       = i_object
-                iv_mode       = iv_mode
-                iv_scope      = iv_scope  ).
-
-
-          WHEN set_collect.
-
-            lcl_help=>lock_collect_set( ).
-
-          WHEN free_collect.
-
-            lcl_help=>lock_collect_free(  ).
-
-          WHEN is_set.
-
-            lv_any = i_any.
-            lv_any2 = i_any2.
-            lv_any3 = i_any3.
-            lv_any4 = i_any4.
-
-            lcl_help=>lock_is_set(
-              EXPORTING
-                iv_val    = lv_any
-                iv_val2   = lv_any2
-                iv_val3   = lv_any3
-                iv_val4   = lv_any4
-                iv_lock   = i_object
-                iv_unam   = iv_uname
-              RECEIVING
-                rv_result = ev_is_set
-            ).
-
-          WHEN OTHERS.
-            raise('CX_WRONG_CALL_OF_METHOD').
-        ENDCASE.
-
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " error handling
-
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Instance Public Method ZCL_001_00_TEST->LOG
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] IV_ID                          TYPE        ANY(optional)
-* | [--->] IV_NO                          TYPE        ANY(optional)
-* | [--->] IV_TYPE                        TYPE        ANY(optional)
-* | [--->] IV_V1                          TYPE        ANY(optional)
-* | [--->] IV_V2                          TYPE        ANY(optional)
-* | [--->] IV_V3                          TYPE        ANY(optional)
-* | [--->] IV_V4                          TYPE        ANY(optional)
-* | [--->] USE_T100_ONLY                  TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] IV_LANGU                       TYPE        ANY (default =SY-LANGU)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<-()] R_RESULT                       TYPE        TY-O_EASY_ABAP
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD log.
-
-    DATA ls_balmt TYPE LINE OF ty-t_bal.
-
-    r_result = me.
-
-    msg(
-      EXPORTING
-        i_any         = i_any
-        iv_id         = iv_id
-        iv_no         = iv_no
-        iv_type       = iv_type
-        iv_v1         = iv_v1
-        iv_v2         = iv_v2
-        iv_v3         = iv_v3
-        iv_v4         = iv_v4
-*        USE_T100_ONLY = ABAP_FALSE
-        iv_langu      = iv_langu
-        raise_error   = abap_false
-      IMPORTING
-*        EV_ID         =
-*        EV_NO         =
-*        EV_TYPE       =
-*        EV_V1         =
-*        EV_V2         =
-*        EV_V3         =
-*        EV_V4         =
-*        EV_NOID       =
-*        EV_TYNOID     =
-        e_any         = ls_balmt
-        es_bapi       = DATA(ls_bapi)
-*        ET_BAPI       =
-    ).
-
-    INSERT ls_bapi INTO TABLE ms_data-t_log.
-
-    info(
-      IMPORTING
-        ev_timestampl      = ls_balmt-time_stmp
-    ).
-
-    INSERT ls_balmt INTO TABLE ms_data-t_bal.
-
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>MSG
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] IV_ID                          TYPE        ANY(optional)
-* | [--->] IV_NO                          TYPE        ANY(optional)
-* | [--->] IV_TYPE                        TYPE        ANY(optional)
-* | [--->] IV_V1                          TYPE        ANY(optional)
-* | [--->] IV_V2                          TYPE        ANY(optional)
-* | [--->] IV_V3                          TYPE        ANY(optional)
-* | [--->] IV_V4                          TYPE        ANY(optional)
-* | [--->] USE_T100_ONLY                  TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] IV_LANGU                       TYPE        ANY (default =SY-LANGU)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] EV_ID                          TYPE        CLIKE
-* | [<---] EV_NO                          TYPE        ANY
-* | [<---] EV_TYPE                        TYPE        CLIKE
-* | [<---] EV_V1                          TYPE        CLIKE
-* | [<---] EV_V2                          TYPE        CLIKE
-* | [<---] EV_V3                          TYPE        CLIKE
-* | [<---] EV_V4                          TYPE        CLIKE
-* | [<---] EV_NOID                        TYPE        CLIKE
-* | [<---] EV_TYNOID                      TYPE        CLIKE
-* | [<---] E_ANY                          TYPE        ANY
-* | [<---] E_ANY_ADD                      TYPE        ANY
-* | [<---] ES_BAPI                        TYPE        BAPIRET2
-* | [<---] ET_BAPI                        TYPE        BAPIRET2_TAB
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD msg.
-
-    DATA:
-      lt_bapiret_result TYPE bapiret2_tab,
-      lt_result         TYPE bapiret2_tab,
-      ls_result         TYPE bapiret2,
-      lv_msgvar_check   TYPE abap_bool,
-      lt_t100           TYPE STANDARD TABLE OF t100,
-      ls_t100           TYPE t100.
-
-    FIELD-SYMBOLS: <ls_bapi>   TYPE bapiret2,
-                   <ls_result> LIKE LINE OF lt_result.
-
-    "Ermitteln von Messageinformationen aus beliebigen Daten und Objekten
-    "Wenn keine Nachrichtenklasse ermittelt werden kann, wird nach Text gesucht
-    "Mapping auf beliebige Ausgabeparameter
-
-    TRY.
-        """""""""""""""""""""""""""""""""""
-        " id/no ermitteln
-        IF iv_id IS NOT INITIAL AND iv_no IS NOT INITIAL.
-          ls_result-number = iv_no.
-          ls_result-id     = iv_id.
-          APPEND ls_result TO lt_result.
-        ENDIF.
-
-        IF i_any IS NOT INITIAL.
-
-          lt_bapiret_result = lcl_help=>t100_get( EXPORTING i_any = i_any ).
-          APPEND LINES OF lt_bapiret_result TO lt_result.
-          IF lt_result IS INITIAL AND use_t100_only = abap_false.
-
-            "Text auch mit Klartext ermitteln
-            DATA(lo_typedescr) = cl_abap_typedescr=>describe_by_data( i_any ).
-*            rtti( EXPORTING i_any = i_any IMPORTING ev_kind = lv_kind_text ).
-            IF lo_typedescr->kind = cl_abap_datadescr=>kind_elem.
-              "lv_kind_text = cl_abap_datadescr=>kind_elem.
-              "Standard umwandeln
-              ls_result = lcl_help=>t100_get_w_text(
-                                      iv_text = i_any
-                                      iv_v1 = iv_v1
-                                      iv_v2 = iv_v2
-                                      iv_v3 = iv_v3
-                                      iv_v4 = iv_v4 ).
-
-              lv_msgvar_check = abap_true.
-              APPEND ls_result TO lt_result.
-
-            ENDIF.
-          ENDIF.
-        ENDIF.
-
-
-        """""""""""""""""""""""""""""""""""
-        " Msginfo gefunden?
-
-        READ TABLE lt_result ASSIGNING <ls_result> INDEX 1.
-        IF sy-subrc <> 0.
-          RAISE EXCEPTION TYPE lcx_no_check.
-        ENDIF.
-
-        "Messagevariablen u Type Ã¼bernehmen
-        IF lv_msgvar_check = abap_false.
-          IF <ls_result>-message_v1 IS INITIAL AND iv_v1 IS NOT INITIAL.
-            <ls_result>-message_v1 = get( print ='X' i_any = iv_v1 ).
-          ENDIF.
-          IF <ls_result>-message_v2 IS INITIAL AND iv_v2 IS NOT INITIAL..
-            <ls_result>-message_v2 = get( print ='X' i_any = iv_v2 ).
-          ENDIF.
-          IF <ls_result>-message_v3 IS INITIAL AND iv_v3 IS NOT INITIAL..
-            <ls_result>-message_v3 = get( print ='X' i_any = iv_v3 ).
-          ENDIF.
-          IF <ls_result>-message_v4 IS INITIAL AND iv_v4 IS NOT INITIAL..
-            <ls_result>-message_v4 = get( print ='X' i_any = iv_v4 ).
-          ENDIF.
-        ENDIF.
-        IF iv_type IS NOT INITIAL.
-          <ls_result>-type = iv_type.
-        ENDIF.
-
-
-        """""""""""""""""""""""""""""""""""
-        " Text bestimmen
-
-        LOOP AT lt_result ASSIGNING <ls_bapi>.
-
-          <ls_bapi>-id = get( trim_upper_case = 'X' i_any = <ls_bapi>-id ).
-
-          lcl_help=>data_t100_get(
-            EXPORTING
-              is_bapi  = <ls_bapi>
-              iv_langu = iv_langu
-              IMPORTING
-              es_t100  = ls_t100 ).
-
-          APPEND ls_t100 TO lt_t100.
-
-          <ls_bapi>-message = ls_t100-text.
-          <ls_bapi> = lcl_help=>t100_replace_placeholder( <ls_bapi> )  .
-
-          <ls_bapi>-type   = get( trim_upper_case = 'X' i_any = <ls_bapi>-type ).
-          <ls_bapi>-id     = get( trim_upper_case = 'X' i_any = <ls_bapi>-id ).
-          <ls_bapi>-number = get( trim_upper_case = 'X' i_any = <ls_bapi>-number ).
-
-        ENDLOOP.
-
-
-        """""""""""""""""""""""""""""""
-        " Ausgabe vorbereiten
-
-        FREE et_bapi.
-
-        READ TABLE lt_result ASSIGNING <ls_bapi>
-            INDEX 1.
-        IF  <ls_bapi>-message IS INITIAL.
-*        ev_
-        ENDIF.
-
-        es_bapi = <ls_bapi>.
-        APPEND LINES OF lt_result TO et_bapi.
-
-        ev_id   = <ls_bapi>-id.
-        ev_no   = <ls_bapi>-number.
-        ev_v1   = <ls_bapi>-message_v1.
-        ev_v2   = <ls_bapi>-message_v2.
-        ev_v3   = <ls_bapi>-message_v3.
-        ev_v4   = <ls_bapi>-message_v4.
-
-        READ TABLE lt_result INTO ls_result
-            WITH KEY type = 'S'.
-        IF sy-subrc = 0.
-          ev_type = ls_result-type.
-        ENDIF.
-
-        READ TABLE lt_result INTO ls_result
-            WITH KEY type = 'W'.
-        IF sy-subrc = 0.
-          ev_type = ls_result-type.
-        ENDIF.
-
-        READ TABLE lt_result INTO ls_result
-            WITH KEY type = 'E'.
-        IF sy-subrc = 0.
-          ev_type = ls_result-type.
-        ENDIF.
-
-        IF ev_noid IS SUPPLIED.
-          ev_noid = <ls_bapi>-number.
-          SHIFT ev_noid RIGHT DELETING TRAILING ' '.
-          CONCATENATE ev_noid '(' <ls_bapi>-id ')'
-            INTO ev_noid.
-          TRANSLATE ev_noid TO UPPER CASE.
-        ENDIF.
-
-        IF ev_tynoid IS SUPPLIED.
-          ev_tynoid = <ls_bapi>-type.
-          CONCATENATE ev_tynoid <ls_bapi>-number
-              '(' <ls_bapi>-id ')' INTO ev_tynoid.
-          TRANSLATE ev_tynoid TO UPPER CASE.
-        ENDIF.
-
-        IF e_any IS SUPPLIED.
-
-          FREE e_any.
-          lcl_help=>t100_set(
-                  EXPORTING it_bapi = lt_result
-                  IMPORTING e_any   = e_any ).
-
-        ENDIF.
-
-        IF e_any_add IS SUPPLIED.
-
-          lcl_help=>t100_set(
-                  EXPORTING it_bapi = lt_result
-                  IMPORTING e_any   = e_any_add ).
-
-        ENDIF.
-
-
-        "Message Befehl
-        LOOP AT lt_result INTO DATA(ls_log_msg).
-          "Watchpoint auf Message soll hier stehenbleiben
-          sy-msgid = ls_log_msg-id.
-          sy-msgno = ls_log_msg-number.
-          sy-msgv1 = ls_log_msg-message_v1.
-          sy-msgv2 = ls_log_msg-message_v2.
-          sy-msgv3 = ls_log_msg-message_v3.
-          sy-msgv4 = ls_log_msg-message_v4.
-          if sy-msgty CN 'EWSI'.
-          sy-msgty = 'I'.
-          endif.
-          MESSAGE ID sy-msgid
-          TYPE sy-msgty
-          NUMBER sy-msgno
-          WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4
-          INTO DATA(lv_dummy).
-        ENDLOOP.
-
-
-
-        """""""""""""""""""""""""""""""
-        " error handling
-
-        DATA  lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error(
-               ix_root = lx_root raise_error = raise_error
-               raise_assert = abap_false ).
-    ENDTRY.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>POPUP
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] IT_TABLE                       TYPE        STANDARD TABLE
-* | [--->] IV_TITLE                       TYPE        CLIKE (default =SY-TITLE)
-* | [--->] IV_VERTICAL_LINES              TYPE        ABAP_BOOL (default =ABAP_TRUE)
-* | [--->] IV_HEADERS_VISIBLE             TYPE        ABAP_BOOL (default =ABAP_TRUE)
-* | [--->] IV_RAISE_DOUBLE_CLICK          TYPE        ABAP_BOOL (default =ABAP_TRUE)
-* | [--->] IV_DEFAULT_TOOLBAR             TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] IT_ICON                        TYPE        STRINGTAB(optional)
-* | [--->] IT_RAISE_HOTSPOT               TYPE        STRINGTAB(optional)
-* | [--->] IT_OUTLEN                      TYPE        NAME2STRINGVALUE_TABLE(optional)
-* | [--->] IT_TITLE                       TYPE        NAME2STRINGVALUE_TABLE(optional)
-* | [--->] IT_SORT                        TYPE        STRINGTAB(optional)
-* | [--->] IT_HIDE                        TYPE        STRINGTAB(optional)
-* | [--->] IV_OPTIMIZE_COLWIDTH           TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] IS_LAYOUT                      TYPE        DISVARIANT(optional)
-* | [--->] IV_LAYOUT_RESTRICTION          TYPE        ANY(optional)
-* | [--->] IV_COL_START                   TYPE        ANY (default ='10')
-* | [--->] IV_COL_END                     TYPE        ANY (default ='160')
-* | [--->] IV_LINE_START                  TYPE        ANY (default ='1')
-* | [--->] IV_LINE_END                    TYPE        ANY (default ='25')
-* | [--->] IV_SEL                         TYPE        ANY(optional)
-* | [--->] IV_SEL_COL                     TYPE        ANY(optional)
-* | [<---] EV_EVENT_TYPE                  TYPE        STRING
-* | [<---] EV_EVENT_ROW                   TYPE        I
-* | [<---] EV_EVENT_COL                   TYPE        STRING
-* | [<---] EV_EVENT_VALUE                 TYPE        STRING
-* | [<---] ET_SELECTION                   TYPE        SALV_T_ROW
-* | [<---] ER_LINE                        TYPE REF TO DATA
-* | [<---] EV_UCOMM                       TYPE        STRING
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD popup.
-
-    DATA:
-      lo_alv        TYPE lcl_help=>ty_o_easy_gui,
-      lv_col_start  TYPE i,
-      lv_col_end    TYPE i,
-      lv_line_start TYPE i,
-      lv_line_end   TYPE i.
-
-    IF sy-batch = abap_true.
-      RETURN.
-    ENDIF.
-
-    CREATE DATA lcl_help=>lr_tab
-        LIKE it_table.
-    FIELD-SYMBOLS: <lt_tab> TYPE STANDARD TABLE.
-
-    ASSIGN lcl_help=>lr_tab->* TO <lt_tab>.
-    <lt_tab> = it_table.
-    "PrÃ¼fung ist Tabelle reine Stringtab/clike tab?
-    "TODO
-
-    lv_col_start  = iv_col_start .
-    lv_col_end    = iv_col_end   .
-    lv_line_start = iv_line_start.
-    lv_line_end   = iv_line_end  .
-
-    CREATE OBJECT lo_alv
-      EXPORTING
-        ct_table    = lcl_help=>lr_tab "REF #( it_table )
-        raise_event = abap_false.
-
-    lo_alv->set(
-        iv_title              = iv_title
-        iv_vertical_lines     = iv_vertical_lines
-        iv_headers_visible    = iv_headers_visible
-        iv_raise_double_click = iv_raise_double_click
-        it_raise_hotspot      = it_raise_hotspot
-        it_outlen             = it_outlen
-*        it_col_setting        = it_col_setting
-        is_layout             = is_layout
-        it_hide               = it_hide
-        iv_default_toolbar    = iv_default_toolbar
-        it_sort               = it_sort
-        iv_layout_restriction = iv_layout_restriction ).
-
-    lo_alv->ms_salv-o_salv->set_screen_popup(
-               start_column = lv_col_start
-               end_column   = lv_col_end
-               start_line   = lv_line_start
-               end_line     = lv_line_end    ).
-
-    IF iv_sel IS NOT INITIAL.
-      DATA lv_sel TYPE i.
-      lv_sel = iv_sel.
-      IF iv_sel_col IS INITIAL.
-        lo_alv->ms_salv-o_selections->set_selected_rows( value = VALUE salv_t_row(  (  lv_sel ) ) ).
-      ELSE.
-        DATA lt_cells TYPE salv_t_cell.
-        APPEND INITIAL LINE TO lt_cells ASSIGNING FIELD-SYMBOL(<ls_cell>).
-        <ls_cell>-row = lv_sel.
-        <ls_cell>-columnname = iv_sel_col.
-*        <ls_cell>-
-        lo_alv->ms_salv-o_selections->set_selected_cells( value = lt_cells ).
-      ENDIF.
-
-
-
-    ENDIF.
-
-
-    lo_alv->display(  ).
-
-    ev_event_type = lo_alv->ms_event-type.
-    ev_event_col  = lo_alv->ms_event-col.
-    ev_event_row  = lo_alv->ms_event-row.
-    ev_event_value = lo_alv->ms_event-value.
-    ev_ucomm = lo_alv->ms_event-ucomm.
-    er_line = lo_alv->ms_event-line.
-    et_selection = lo_alv->ms_event-t_selections.
+    endtry.
+
+  endmethod.
+
+
+  method gui_popup_gen.
+
+    data:
+      lo_alv        type lcl_help=>ty_o_easy_gui,
+      lv_col_start  type i,
+      lv_col_end    type i,
+      lv_line_start type i,
+      lv_line_end   type i.
+
+    try.
+
+        if abap_false = check( gui_active = 'X' ).
+          x_raise('ZCX_GUI_ACTIVE_IN_BATCH_MODE_ERROR').
+        endif.
+
+        create data lcl_help=>lr_tab
+            like it_table.
+        field-symbols: <lt_tab> type standard table.
+
+        assign lcl_help=>lr_tab->* to <lt_tab>.
+        <lt_tab> = it_table.
+        "PrÃ¼fung ist Tabelle reine Stringtab/clike tab?
+        "TODO
+
+        lv_col_start  = iv_col_start .
+        lv_col_end    = iv_col_end   .
+        lv_line_start = iv_line_start.
+        lv_line_end   = iv_line_end  .
+
+        create object lo_alv
+          exporting
+            ct_table    = lcl_help=>lr_tab "REF #( it_table )
+            raise_event = abap_false.
+
+        lo_alv->set(
+            iv_title              = iv_title
+            iv_vertical_lines     = iv_vertical_lines
+            iv_headers_visible    = iv_headers_visible
+            iv_raise_double_click = iv_raise_double_click
+            it_raise_hotspot      = it_raise_hotspot
+            it_outlen             = it_outlen
+            it_col_setting        = it_col_setting
+            is_layout             = is_layout
+            it_hide               = it_hide
+            iv_default_toolbar    = iv_default_toolbar
+            it_sort               = it_sort
+            iv_layout_restriction = iv_layout_restriction ).
+
+        lo_alv->ms_salv-o_salv->set_screen_popup(
+                   start_column = lv_col_start
+                   end_column   = lv_col_end
+                   start_line   = lv_line_start
+                   end_line     = lv_line_end    ).
+
+        if iv_sel is not initial.
+
+          try.
+              data lv_sel type i.
+              lv_sel = iv_sel.
+              if iv_sel_col is initial.
+                lo_alv->ms_salv-o_selections->set_selected_rows( value = value salv_t_row(  (  lv_sel ) ) ).
+              else.
+                lo_alv->ms_salv-o_selections->set_current_cell( value =
+                    value salv_s_cell( row = iv_sel columnname = iv_sel_col  ) ).
+*            data lt_cells type salv_t_cell.
+*            append initial line to lt_cells assigning field-symbol(<ls_cell>).
+*            <ls_cell>-row       = lv_sel.
+*            <ls_cell>-columnname = iv_sel_col.
+*            lo_alv->ms_salv-o_selections->set_selected_cells( value = lt_cells ).
+              endif.
+
+            catch cx_root.
+          endtry.
+
+        endif.
+
+
+        lo_alv->display(  ).
+
+        ev_event_type = lo_alv->ms_event-type.
+        ev_event_col  = lo_alv->ms_event-col.
+        ev_event_row  = lo_alv->ms_event-row.
+        ev_event_value = lo_alv->ms_event-value.
+        ev_ucomm = lo_alv->ms_event-ucomm.
+
+*    er_line = lo_alv->ms_event-line.
+        assign lo_alv->ms_event-line->* to field-symbol(<ls_line>).
+        if <ls_line> is assigned and er_line is supplied.
+          er_line = <ls_line>.
+        endif.
+
+        et_selection = lo_alv->ms_event-t_selections.
 *    if lo_alv->ms_salv-o_salv is bound.
 **        ms_event-t_selections = ms_salv-o_selections->get_selected_rows( ).
 *    ev_event_type = lo_alv->ms_event-type.
 
 
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>RAISE
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_HEAD                         TYPE        ANY(optional)
-* | [--->] I_PREV                         TYPE        ANY(optional)
-* | [--->] I_CODE                         TYPE        ANY(optional)
-* | [--->] I_SER_VALUE                    TYPE        ANY(optional)
-* | [--->] I_SER_DATA                     TYPE        ANY(optional)
-* | [--->] I_ADD_T100                     TYPE        ANY(optional)
-* | [--->] I_ADD_WRITE                    TYPE        ANY(optional)
-* | [--->] IV_DEPTH                       TYPE        I (default =0)
-* | [--->] RESUMABLE                      TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<-()] R_RESULT                       TYPE REF TO CX_NO_CHECK
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD raise.
-
-    " Erzeugen einer Exception
-    " Wenn e_result nicht gefuellt -> Methode wirft Exception
-    " Diverse Inputparameter werden in Exception abgelegt
-
-    DATA(ls_sy) = sy.
-
-    DATA lx_prev    TYPE REF TO cx_root.
-    IF i_prev IS NOT INITIAL.
-      lx_prev = raise( i_any =  i_prev iv_depth = iv_depth + 1 ).
-    ENDIF.
-
-    DATA lx_result  TYPE REF TO lcx_no_check.
-    TRY.
-        lx_result ?= i_any.
-
-      CATCH cx_root.
-
-        "Spezialfall: Bei Exception -> seinen Vorgaenger nehmen
-        IF lx_prev IS INITIAL.
-          TRY.
-              lx_prev ?= i_any.
-              lx_prev = lx_prev->previous.
-            CATCH cx_root.
-          ENDTRY.
-        ENDIF.
-
-        "ganz neu
-        CREATE OBJECT lx_result.
-
-        IF i_any IS INITIAL.
-          "DE  >3  279 Es ist ein unerwarteter Fehler aufgetreten
-          lx_result->ms_data-s_bapiret = get_msg( iv_id = '>3' iv_no  = '279').
-        ELSE.
-          lx_result->ms_data-s_bapiret = get_msg( i_any ).
-        ENDIF.
-
-        lx_result->ms_data-s_bapiret-type = 'E'.
-
-        msg(
-          EXPORTING
-            i_any   = lx_result->ms_data-s_bapiret
-          IMPORTING
-            e_any   = lx_result->if_t100_message~t100key
-            ev_noid = lx_result->ms_data-noid
-        ).
-
-        lx_result->text         = lx_result->ms_data-s_bapiret-message.
-        lx_result->ms_data-s_sy = ls_sy.
-        lx_result->ms_data-code = i_code.
-        lx_result->ms_data-guid = get( guid16 = 'X' ).
-        IF lx_result->ms_data-s_bapiret-message(3) = 'ZCX' OR i_any(2) = 'CX'.
-          lx_result->ms_data-code = lx_result->ms_data-s_bapiret-message.
-        ENDIF.
-
-        info(
-        EXPORTING
-          iv_depth = iv_depth + 1
-        IMPORTING
-          ev_timestampl      = lx_result->ms_data-timestampl
-          es_callstack       = lx_result->ms_data-s_callstack
-          et_callstack       = lx_result->ms_data-t_callstack
-          et_source_code     = lx_result->ms_data-t_source_code
-      ).
-
-        "Source Code verkleinern
-        DATA ls_dummy   LIKE LINE OF lx_result->ms_data-t_source_code.
-        DATA lv_counter TYPE i.
-        LOOP AT lx_result->ms_data-t_source_code INTO ls_dummy.
-          ADD 1 TO lv_counter.
-          IF lv_counter > lx_result->ms_data-s_callstack-line + 5.
-            DELETE lx_result->ms_data-t_source_code.
-          ENDIF.
-        ENDLOOP.
-        IF lx_result->ms_data-s_callstack-line - 35 > 0.
-          DO lx_result->ms_data-s_callstack-line - 35 TIMES.
-            DELETE lx_result->ms_data-t_source_code INDEX 1.
-          ENDDO.
-        ENDIF.
-
-    ENDTRY.
-
-
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    "Previous
-
-    IF lx_prev IS NOT INITIAL.
-      lcl_help=>cx_set(
-          ix_no_check = lx_result
-          ix_prev     = lx_prev
-      ).
-    ENDIF.
-
-
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    "weitere Infos
-
-    msg( EXPORTING i_any = lx_result IMPORTING e_any = lx_result->texttab ).
-
-    IF i_add_t100 IS NOT INITIAL.
-      msg( EXPORTING i_any      = i_add_t100
-            IMPORTING e_any_add = lx_result->ms_data-add_t100 ).
-    ENDIF.
-    IF i_add_write IS NOT INITIAL.
-      trans( EXPORTING print = 'X' i_any = i_add_write
-             IMPORTING e_result = lx_result->ms_data-add_write   ).
-    ENDIF.
-    IF i_ser_data IS NOT INITIAL.
-      lx_result->ms_data-add_serial = i_ser_data.
-    ENDIF.
-    IF i_ser_value IS NOT INITIAL.
-      lx_result->ms_data-serial_value = i_ser_value.
-    ENDIF.
-
-
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    " Head
-
-    IF i_head IS NOT INITIAL.
-      lx_result ?= raise( i_any = i_head i_prev = lx_result iv_depth = iv_depth + 1 ).
-    ENDIF.
-
-
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    " raisen
-
-    IF r_result IS SUPPLIED.
-      r_result = lx_result.
-    ELSEIF resumable = abap_true.
-      RAISE RESUMABLE EXCEPTION lx_result.
-    ELSE.
-      RAISE EXCEPTION lx_result.
-    ENDIF.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>RAISE_CHECK
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] READ_TABLE                     TYPE        ABAP_BOOL(optional)
-* | [--->] SELECT                         TYPE        ABAP_BOOL(optional)
-* | [--->] FUNCTION                       TYPE        ABAP_BOOL(optional)
-* | [--->] METHOD                         TYPE        ABAP_BOOL(optional)
-* | [--->] FOR_ALL_ENTRIES                TYPE        ABAP_BOOL(optional)
-* | [--->] NOT_INITIAL                    TYPE        ABAP_BOOL(optional)
-* | [--->] SY_SUBRC                       TYPE        ABAP_BOOL(optional)
-* | [--->] SY_MSGTY                       TYPE        ABAP_BOOL(optional)
-* | [--->] I_CHECK1                       TYPE        ANY(optional)
-* | [--->] I_CHECK2                       TYPE        ANY(optional)
-* | [--->] I_CHECK3                       TYPE        ANY(optional)
-* | [--->] IS_SY                          TYPE        SY (default =SY)
-* | [--->] I_FLAG                         TYPE        ANY(optional)
-* | [--->] IV_SUBRC                       TYPE        ANY(optional)
-* | [--->] I_VAL1                         TYPE        ANY(optional)
-* | [--->] I_VAL2                         TYPE        ANY(optional)
-* | [--->] I_VAL3                         TYPE        ANY(optional)
-* | [--->] I_VAL4                         TYPE        ANY(optional)
-* | [--->] I_CODE                         TYPE        ANY(optional)
-* | [--->] I_SER_VALUE                    TYPE        ANY(optional)
-* | [--->] I_SER_DATA                     TYPE        ANY(optional)
-* | [--->] I_ADD_T100                     TYPE        ANY(optional)
-* | [--->] I_ADD_WRITE                    TYPE        ANY(optional)
-* | [--->] I_HEAD                         TYPE        ANY(optional)
-* | [--->] I_PREV                         TYPE        ANY(optional)
-* | [--->] RESUMABLE                      TYPE        ANY (default =ABAP_FALSE)
-* | [<-()] R_RESULT                       TYPE REF TO CX_ROOT
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD raise_check.
-
-    DATA:
-      lx_no_check  TYPE REF TO lcx_no_check,
-      ls_sy        TYPE sy,
-      lv_tabname   TYPE string,
-      lv_readtable TYPE string,
-      lx_prev      TYPE REF TO lcx_no_check,
-      ls_bapi      TYPE bapiret2,
-      lv_is_error  TYPE abap_bool,
-      lt_add_t100  TYPE bapiret2_tab.
-    DATA: lv_v1 TYPE string, lv_v2 TYPE string, lv_v3 TYPE string.
-
-
-    " Testen ob ein Fehlerfall (je nach Situation) vorliegt
-    " Bsp nach Select, Read Table, Call function usw
-    " Bei Erkennung eines Fehler wird eine Exception vom Typ no_check geraist
-    " Wenn e_result nicht gefuellt -> Methode wirft Exception
-
-    ls_sy = sy.
-    IF is_sy IS SUPPLIED.
-      ls_sy = is_sy.
-    ENDIF.
-    lx_no_check ?= raise( iv_depth = 1 ).  "Dummy Exception fuer Codingstelle etc erzeugen
-
-
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    " PrÃ¼fung und Nachricht erzeugen
-
-    CASE abap_true.
-
-      WHEN sy_msgty.
-
-        IF ls_sy-msgty <> 'E'.
-          RETURN.
-        ENDIF.
-
-        DATA lv_method TYPE string.
-        DATA lv_repid TYPE string.
-
-        info(
-          EXPORTING
-            iv_depth     = 1
-          IMPORTING
-             ev_method   = lv_method
-             ev_repid    = lv_repid  ).
-
-        "DE CACSCOR 061 SYST: Fehler in Routine &1 &2 &3 &4
-        ls_bapi = get_msg( i_any = '061(CACSCOR)' iv_v1 = lv_repid && '(' && lv_method && ')'
-                            iv_v2 = ' | ' iv_v3 = 'sy-msgty' iv_v4 = `= E` ). "iv_v4 = ls_sy-subrc ).
-
-        IF ls_sy-msgid IS NOT INITIAL AND ls_sy-msgno IS NOT INITIAL.
-          lx_prev ?= raise( i_any = ls_sy iv_depth = 1 i_prev = i_prev ).
-        ELSE.
-          IF i_prev IS NOT INITIAL.
-            lx_prev ?= raise( i_any = i_prev iv_depth = 1 ).
-          ENDIF.
-        ENDIF.
-
-      WHEN select.
-
-        IF ls_sy-subrc = 0.
-          RETURN.
-        ENDIF.
-
-        lv_tabname = lcl_help=>source_code_get_selectname(
-             it_source = lx_no_check->ms_data-t_source_code ).
-
-        "Select auf Tabelle xy fehlgeschlagen CCSEQ' iv_no = 061
-        ls_bapi =  get_msg(
-              iv_id         = 'CCSEQ'
-              iv_no         = '061'
-              iv_v1         = lv_tabname ).
-
-        IF i_prev IS NOT INITIAL.
-          lx_prev ?= raise( i_any = i_prev iv_depth = 1 ).
-        ENDIF.
-
-      WHEN function.
-
-        "Fehlerkontrolle nach Aufruf Funktionsbaustein
-        "Sy Werte korrekt? Nachrichten nicht fehlerhaft? Sonstige Flags?
-
-        DATA lt_t100_tmp TYPE bapiret2_tab.
-
-        msg( EXPORTING i_any = i_check1 IMPORTING et_bapi = lt_t100_tmp ).
-        msg( EXPORTING i_any = i_check2 IMPORTING et_bapi = lt_t100_tmp ).
-        msg( EXPORTING i_any = i_check3 IMPORTING et_bapi = lt_t100_tmp ).
-
-        "Ist irgendwo ein Fehler uebergeben worden?
-        IF  abap_false = check( t100_error = 'X' i_any = lt_t100_tmp  ).
-
-          DO.
-            IF ls_sy-subrc <> 0.
-              msg( EXPORTING i_any = is_sy iv_type = 'E' IMPORTING et_bapi = lt_t100_tmp ).
-              IF lt_t100_tmp IS INITIAL.
-                msg( EXPORTING i_any = 'ZCX_SY_SUBRC_NOT_EQUALS_NULL' iv_type = 'E'
-                   IMPORTING et_bapi =  lt_t100_tmp ).
-              ENDIF.
-              EXIT.
-            ENDIF.
-
-            IF i_flag = abap_true.
-              msg( EXPORTING i_any = 'ZCX_ERROR_FLAG_IS_SET' iv_type = 'E'
-                   IMPORTING et_bapi =  lt_t100_tmp ).
-              EXIT.
-            ENDIF.
-            IF iv_subrc <> 0.
-              msg( EXPORTING i_any = 'ZCX_SUBRC_IS_NOT_NULL' iv_type = 'E'
-                   IMPORTING et_bapi = lt_t100_tmp ).
-              EXIT.
-            ENDIF.
-
-            IF sy_msgty = abap_true.
-              IF abap_true = check( t100_error = 'X' i_any = ls_sy ).
-                msg( EXPORTING i_any = ls_sy iv_type = 'E'
-                     IMPORTING et_bapi = lt_t100_tmp ).
-                EXIT.
-              ENDIF.
-            ENDIF.
-
-            EXIT.
-          ENDDO.
-
-        ENDIF.
-
-        "Wenn keine Fehlersituation -> Abbruch
-        IF abap_false = check( t100_error = 'X' i_any =  lt_t100_tmp  ).
-          RETURN.
-        ENDIF.
-
-        "Nachrichten aufbereiten
-        DELETE ADJACENT DUPLICATES FROM lt_t100_tmp COMPARING message.
-        lt_add_t100 = lt_t100_tmp.
-
-
-        IF i_prev IS NOT INITIAL.
-          lx_prev ?= raise( i_any = i_prev iv_depth = 1 ).
-        ENDIF.
-
-        info(
-          EXPORTING
-            iv_depth           = 1
-          IMPORTING
-            et_source_code     = DATA(lt_source_code)
-            es_callstack       = DATA(ls_callstack)
-        ).
-
-
-        WHILE lines( lt_source_code ) > ls_callstack-line.
-          DELETE lt_source_code INDEX lines( lt_source_code ).
-        ENDWHILE.
-
-        lcl_help=>source_code_get_fubaname( EXPORTING
-                      it_source = lt_source_code
-                        IMPORTING
-                        e_v1 = lv_v1
-                        e_v2 = lv_v2
-                        e_v3 = lv_v3 ).
-
-        "DE 56  704 Fehler beim Aufruf des Funktionsbausteines &
-        ls_bapi = get_msg(
-              iv_id           = '56'
-              iv_no           = '704'
-              iv_v1           = lv_v1
-              iv_v2           = lv_v2
-              iv_v3           = lv_v3 ).
-
-
-
-      WHEN read_table.
-
-        IF ls_sy-subrc = 0.
-          RETURN.
-        ENDIF.
-
-        lv_readtable = lcl_help=>source_code_get_readtable(
-               it_source = lx_no_check->ms_data-t_source_code ).
-
-        ""DE  DS  353 Fehler beim Zugriff auf die interne Tabelle & (&)
-        ls_bapi = get_msg(
-           EXPORTING
-             iv_id           = 'DS'
-             iv_no           = '353'
-             iv_v1           = lv_readtable ).
-
-        IF i_prev IS NOT INITIAL.
-          lx_prev ?= raise( i_any = i_prev iv_depth = 1 ).
-        ENDIF.
-
-
-      WHEN not_initial.
-
-        IF i_check1 IS NOT INITIAL.
-          RETURN.
-        ENDIF.
-
-
-        "DE EI  251 Der Wert ist initial
-        ls_bapi = get_msg( i_any = '251(EI)'  ).
-        "iv_v4 = ls_sy-subrc ).
-
-*        DATA lv_descr TYPE string.
-
-*        rtti( EXPORTING i_any = i_check1 iv_langu = iv_langu
-*              IMPORTING ev_typedescr = lv_descr ).
-
-*        IF lv_descr IS INITIAL.
-*          ls_bapi = get_msg( i_any = 'ZCX_VALUE_IS_INITIAL_ERROR' iv_v1 = lv_descr ).
-*        ELSE.
-*          ls_bapi = get_msg( i_any = 'ZCX_VALUE_&1_INITIAL_ERROR' iv_v1 = lv_descr ).
-*        ENDIF.
-
-        IF i_prev IS NOT INITIAL.
-          lx_prev ?= raise( i_any = i_prev iv_depth = 1 ).
-        ENDIF.
-
-
-      WHEN for_all_entries.
-
-*      cx_sy_t
-
-        "Schauen ob Tabelle gefÃ¼llt ist
-        IF i_check1 IS NOT INITIAL.
-          RETURN.
-        ENDIF.
-
-        lv_readtable = lcl_help=>source_code_get_not_initial( ).
-        lx_prev ?= raise(  i_any = 'CX_WRONG_SELECT_WITH_FOR_ALL_ENTRIES' i_prev = i_prev ).
-
-        "Select auf Tabelle xy fehlgeschlagen CCSEQ' iv_no = 061
-        ls_bapi =  get_msg(
-            EXPORTING
-              iv_id           = 'CCSEQ'
-              iv_no           = '061'
-              iv_v1           = lv_readtable ).
-
-
-      WHEN method.
-
-        IF ls_sy-subrc = 0.
-          RETURN.
-        ENDIF.
-
-        ls_bapi = get_msg('ZCX_CALL_METHOD_ERROR').
-        IF i_prev IS NOT INITIAL.
-          lx_prev ?= raise( i_any = i_prev iv_depth = 1 ).
-        ENDIF.
-
-
-      WHEN sy_subrc.
-
-        IF ls_sy-subrc = 0. " AND ls_sy-msgty <> 'E'.
-          RETURN.
-        ENDIF.
-
-*        DATA lv_method TYPE string.
-*        DATA lv_repid TYPE string.
-
-        info(
-          EXPORTING
-            iv_depth     = 1
-          IMPORTING
-             ev_method   = lv_method
-             ev_repid    = lv_repid  ).
-
-        DATA(lv_name) = cl_oo_classname_service=>get_clsname_by_include( incname = CONV #( lv_repid )  ).
-
-        "DE CACSCOR 061 SYST: Fehler in Routine &1 &2 &3 &4
-        ls_bapi = get_msg( i_any = '061(CACSCOR)' iv_v1 = lv_name && '(' && lv_method && ')'
-                            iv_v2 = ' | ' iv_v3 = 'sy-subrc' iv_v4 = `<> 0` ). "iv_v4 = ls_sy-subrc ).
-
-        IF ls_sy-msgid IS NOT INITIAL AND ls_sy-msgno IS NOT INITIAL.
-          lx_prev ?= raise( i_any = ls_sy iv_depth = 1 i_prev = i_prev ).
-        ELSE.
-          IF i_prev IS NOT INITIAL.
-            lx_prev ?= raise( i_any = i_prev iv_depth = 1 ).
-          ENDIF.
-        ENDIF.
-
-
-      WHEN OTHERS.
-
-        IF i_check1 IS NOT INITIAL.
-          msg( EXPORTING  i_any   = i_check1
-                IMPORTING  et_bapi = lt_add_t100 ).
-        ENDIF.
-
-        IF i_check2 IS NOT INITIAL.
-          msg( EXPORTING  i_any   = i_check2
-                IMPORTING  et_bapi = lt_add_t100   ).
-        ENDIF.
-
-        IF i_check3 IS NOT INITIAL.
-          msg( EXPORTING  i_any   = i_check3
-                IMPORTING  et_bapi = lt_add_t100   ).
-        ENDIF.
-
-        IF is_sy IS SUPPLIED.
-          msg( EXPORTING  i_any   = is_sy
-                IMPORTING  et_bapi = lt_add_t100 ).
-          IF is_sy-subrc <> 0.
-            lv_is_error = abap_true.
-          ENDIF.
-        ENDIF.
-
-        IF lv_is_error = abap_false.
-          lv_is_error = check( t100_error = 'X' i_any = lt_add_t100  ).
-        ENDIF.
-
-        IF lv_is_error = abap_false.
-          RETURN.
-        ENDIF.
-
-        IF lines( lt_add_t100  ) = 1.
-          ls_bapi = get_msg( lt_add_t100[ 1 ] ).
-        ELSE.
-          "ein unerwarteter Fehler ist aufgetreten
-          ls_bapi = get_msg(  iv_id = '>3' iv_no = '279' ).
-        ENDIF.
-        IF i_prev IS NOT INITIAL.
-          lx_prev ?= raise( i_any = i_prev iv_depth = 1 ).
-        ENDIF.
-
-
-    ENDCASE.
-
-
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    " Exception erzeugen
-
-    DATA lv_ser_value TYPE string.
-    IF i_val1 IS SUPPLIED.
-      lv_ser_value = get(  json_deep = 'X' i_any = i_val1 i_any2 = i_val2 i_any3 = i_val3 i_any4 = i_val4 ).
-    ELSE.
-      lv_ser_value = i_ser_value.
-    ENDIF.
-
-    lx_no_check ?=  raise(
-         i_any         = ls_bapi
-         i_head        = i_head
-         i_prev        = i_prev
-         iv_depth      = 1
-         i_code        = i_code
-         i_add_t100    = lt_add_t100
-         i_ser_value   = lv_ser_value
-         i_ser_data    = i_ser_data
-         i_add_write   = i_add_write  ).
-
-    IF r_result IS SUPPLIED.
-      r_result = lx_no_check.
-    ELSEIF resumable = abap_true.
-      RAISE RESUMABLE EXCEPTION lx_no_check.
-    ELSE.
-      RAISE EXCEPTION lx_no_check.
-    ENDIF.
-
-  ENDMETHOD.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>RTTI
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] IV_NAME                        TYPE        ANY(optional)
-* | [--->] I_FNAM_TYPE                    TYPE        ANY(optional)
-* | [--->] I_FNAM_TAB                     TYPE        ANY(optional)
-* | [--->] IV_LANGU                       TYPE        ANY (default =SY-LANGU)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] EV_KIND                        TYPE        STRING
-* | [<---] EV_TYPE                        TYPE        STRING
-* | [<---] EV_TYPE_IS_DDIC                TYPE        ABAP_BOOL
-* | [<---] EV_TYPE_KIND                   TYPE        STRING
-* | [<---] EV_TYPE_KIND_IS_C              TYPE        ABAP_BOOL
-* | [<---] EV_LINE_KIND                   TYPE        STRING
-* | [<---] EV_LINE_TYPE                   TYPE        STRING
-* | [<---] EV_LINE_TYPE_KIND              TYPE        STRING
-* | [<---] EV_LINE_TYPE_KIND_IS_C         TYPE        ABAP_BOOL
-* | [<---] EV_LINE_TYPE_IS_DDIC           TYPE        ABAP_BOOL
-* | [<---] EV_REF_DYN                     TYPE        STRING
-* | [<---] EV_REF_STAT                    TYPE        STRING
-* | [<---] EV_REF_SUPER                   TYPE        STRING
-* | [<---] ET_REF_SUPER                   TYPE        STRINGTAB
-* | [<---] ET_COMP                        TYPE        ABAP_COMPONENT_TAB
-* | [<---] ET_DOMRANGE                    TYPE        STANDARD TABLE
-* | [<---] EV_CONVEXIT                    TYPE        CLIKE
-* | [<---] EV_IN_DOMR                     TYPE        ABAP_BOOL
-* | [<---] EV_FIELDNAME                   TYPE        CLIKE
-* | [<---] EV_TYPEDESCR                   TYPE        CLIKE
-* | [<---] EV_OUTPUTLEN                   TYPE        I
-* | [<---] EV_LENGTH                      TYPE        I
-* | [<---] EO_HANDLE                      TYPE REF TO CL_ABAP_DATADESCR
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD rtti.
-
-    DATA:
-      ls_dd04l       TYPE dd04l,
-      ls_dd01l       TYPE dd01l,
-      lo_class       TYPE REF TO cl_abap_classdescr,
-      lo_class_super TYPE REF TO cl_abap_classdescr,
-      lo_ref         TYPE REF TO cl_abap_refdescr,
-      lo_descr_ref   TYPE REF TO cl_abap_typedescr,
-      lo_obj         TYPE REF TO cl_abap_objectdescr.
-
-    TRY.
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " Kind bestimmen
-
-        DATA: lo_descr TYPE REF TO cl_abap_typedescr.
-
-        IF i_any IS SUPPLIED.
-          lo_descr = cl_abap_typedescr=>describe_by_data( i_any ).
-        ELSEIF iv_name IS NOT INITIAL.
-          cl_abap_typedescr=>describe_by_name(
-             EXPORTING
-               p_name         = iv_name " Type name
-             RECEIVING
-               p_descr_ref  =  lo_descr   " Reference to description object
-             EXCEPTIONS
-               type_not_found = 1
-               OTHERS         = 2 ).
-          IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-          raise_check( method = 'X' ).
-        ELSE.
-          raise('CX_METHOD_CALL_W_INPUT_INITIAL').
-        ENDIF.
-
-        ev_kind = lo_descr->kind.
-*        eo_handle ?= lo_descr.
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        "method speed up: nur weiter durchlaufen wenn auch was anderes gebraucht wird
-
-        IF ev_type    IS NOT SUPPLIED
-         AND  ev_type_kind         IS NOT SUPPLIED
-         AND  ev_type_is_ddic      IS NOT SUPPLIED
-         AND  ev_line_kind         IS NOT SUPPLIED
-         AND  ev_type_kind_is_c    IS NOT SUPPLIED
-         AND  ev_line_type         IS NOT SUPPLIED
-         AND  ev_line_type_kind    IS NOT SUPPLIED
-         AND  ev_line_type_kind_is_c IS NOT SUPPLIED
-         AND  ev_line_type_is_ddic IS NOT SUPPLIED
-         AND  ev_ref_dyn           IS NOT SUPPLIED
-         AND  ev_ref_stat          IS NOT SUPPLIED
-         AND  ev_ref_super         IS NOT SUPPLIED
-         AND  et_ref_super         IS NOT SUPPLIED
-         AND  !et_comp             IS NOT SUPPLIED
-         AND  !et_domrange         IS NOT SUPPLIED
-         AND  !ev_convexit         IS NOT SUPPLIED
-         AND  !ev_in_domr          IS NOT SUPPLIED
-         AND  !ev_fieldname        IS NOT SUPPLIED
-         AND  !ev_typedescr        IS NOT SUPPLIED
-         AND  !ev_outputlen        IS NOT SUPPLIED
-         AND  eo_handle            IS NOT SUPPLIED
-         AND  ev_length            IS NOT SUPPLIED.
-          RETURN.
-        ENDIF.
-
-*        eo_handle = lo_descr->c.
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        "Typinfos bestimmen
-
-        CASE lo_descr->kind.
-
-          WHEN cl_abap_typedescr=>kind_elem.
-
-            DATA lo_elem TYPE REF TO cl_abap_elemdescr.
-            lo_elem ?=  lo_descr.
-
-*            lo_elem->cr
-
-            ev_type      = lo_elem->get_relative_name(  ).
-            ev_type_kind = lo_elem->type_kind.
-*            ev_type_ddic = lo_elem->type_
-*            lo_elem->
-            IF lo_elem->is_ddic_type(  ) = abap_true.
-              ev_type_is_ddic = abap_true.
-            ENDIF.
-
-            CASE ev_type_kind.
-              WHEN cl_abap_typedescr=>typekind_char
-              OR cl_abap_typedescr=>typekind_string
-              OR cl_abap_typedescr=>typekind_num
-              OR cl_abap_typedescr=>typekind_clike
-              OR cl_abap_typedescr=>typekind_csequence.
-
-                ev_type_kind_is_c = abap_true.
-            ENDCASE.
-
-
-          WHEN cl_abap_typedescr=>kind_struct.
-
-            DATA lo_struct TYPE REF TO cl_abap_structdescr.
-            lo_struct ?= lo_descr.
-
-
-
-*              CATCH cx_sy_struct_creation.  " (  ).
-
-            ev_type      = lo_struct->get_relative_name(  ).
-            ev_type_kind = lo_struct->type_kind.
-            IF lo_struct->is_ddic_type(  ) = abap_true.
-              ev_type_is_ddic = abap_true.
-            ENDIF.
-
-*            IF et_comp IS SUPPLIED.
-            et_comp = lo_struct->get_components(  ).
-*            ENDIF.
-            eo_handle = lo_struct->create(
-                p_components          =  et_comp
-*                p_strict              = TRUE
-            ).
-
-          WHEN cl_abap_typedescr=>kind_table.
-
-            DATA: lo_tab TYPE REF TO cl_abap_tabledescr.
-            lo_tab ?= lo_descr.
-
-*            ev_kind      = lo_tab->kind.
-            ev_type      = lo_tab->get_relative_name(  ).
-            ev_type_kind = lo_tab->type_kind.
-            IF lo_tab->is_ddic_type(  ) = abap_true.
-              ev_type_is_ddic = abap_true.
-            ENDIF.
-
-            DATA lo_descr_line TYPE REF TO cl_abap_structdescr.
-
-            lo_descr = lo_tab->get_table_line_type(  ).
-            ev_line_kind      = lo_descr->kind.
-            ev_line_type      = lo_descr->get_relative_name(  ).
-            ev_line_type_kind = lo_descr->type_kind.
-            IF lo_descr->is_ddic_type(  ) = abap_true.
-              ev_line_type_is_ddic = abap_true.
-            ENDIF.
-
-*            IF et_comp IS SUPPLIED.
-            TRY.
-                lo_descr_line ?= lo_descr.
-
-                eo_handle = lo_tab->create(
-                    EXPORTING
-                      p_line_type          =  lo_descr_line   " Line Type
-                  ).
-*                     CATCH cx_sy_table_creation.    "
-
-              CATCH cx_root.
-            ENDTRY.
-*            ENDIF.
-
-
-            CASE ev_line_type_kind.
-              WHEN cl_abap_datadescr=>typekind_csequence
-              OR cl_abap_datadescr=>typekind_char
-              OR cl_abap_datadescr=>typekind_clike
-              OR cl_abap_datadescr=>typekind_string.
-                ev_line_type_kind_is_c = abap_true.
-            ENDCASE.
-
-
-          WHEN cl_abap_typedescr=>kind_class.
-
-            lo_class ?= lo_descr.
-            ev_ref_stat =  lo_class->absolute_name+7.
-            ev_type     = ev_ref_stat.
-
-            IF et_ref_super IS SUPPLIED OR ev_ref_super IS SUPPLIED.
-
-              lo_class_super = lo_class.
-              WHILE lo_class_super IS BOUND.
-                IF '\CLASS=OBJECT' = lo_class_super->absolute_name.
-                  EXIT.
-                ENDIF.
-                ev_ref_super = lo_class_super->absolute_name+7.
-                APPEND ev_ref_super TO et_ref_super.
-                lo_class_super = lo_class_super->get_super_class_type(  ).
-              ENDWHILE.
-
-            ENDIF.
-
-            RETURN.
-
-          WHEN cl_abap_typedescr=>kind_ref.
-
-            lo_ref ?= cl_abap_typedescr=>describe_by_data( i_any ).
-            lo_descr_ref = lo_ref->get_referenced_type(  ).
-            ev_ref_stat  = lo_descr_ref->absolute_name+7.
-            ev_type      = ev_ref_stat.
-
-            IF et_ref_super IS SUPPLIED OR ev_ref_super IS SUPPLIED.
-
-              lo_class ?= lo_descr_ref.
-              lo_class_super = lo_class.
-              WHILE lo_class_super IS BOUND.
-                IF '\CLASS=OBJECT' = lo_class_super->absolute_name.
-                  EXIT.
-                ENDIF.
-                ev_ref_super = lo_class_super->absolute_name+7.
-                APPEND ev_ref_super TO et_ref_super.
-                lo_class_super = lo_class_super->get_super_class_type(  ).
-              ENDWHILE.
-
-            ENDIF.
-
-            IF i_any IS BOUND AND ( ev_ref_dyn IS SUPPLIED OR et_ref_super IS SUPPLIED ).
-
-              lo_obj ?= cl_abap_typedescr=>describe_by_object_ref( i_any ).
-              ev_ref_dyn = lo_obj->absolute_name+7.
-
-              IF et_ref_super IS SUPPLIED.
-                FREE et_ref_super.
-                lo_class ?= lo_obj.
-                lo_class_super = lo_class.
-                WHILE lo_class_super IS BOUND.
-                  IF '\CLASS=OBJECT' = lo_class_super->absolute_name.
-                    EXIT.
-                  ENDIF.
-                  ev_ref_super = lo_class_super->absolute_name+7.
-                  APPEND ev_ref_super TO et_ref_super.
-                  lo_class_super = lo_class_super->get_super_class_type(  ).
-                ENDWHILE.
-
-              ENDIF.
-
-            ENDIF.
-
-            RETURN.
-        ENDCASE.
-
-
-        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        "method speed up: nur weiter durchlaufen wenn auch was anderes gebraucht wird
-
-        IF    !et_comp             IS NOT SUPPLIED
-         AND  !et_domrange         IS NOT SUPPLIED
-         AND  !ev_convexit         IS NOT SUPPLIED
-         AND  !ev_in_domr          IS NOT SUPPLIED
-         AND  !ev_fieldname        IS NOT SUPPLIED
-         AND  !ev_typedescr        IS NOT SUPPLIED
-         AND  !ev_outputlen        IS NOT SUPPLIED
-           AND  ev_length            IS NOT SUPPLIED
-         AND  eo_handle            IS NOT SUPPLIED.
-          RETURN.
-        ENDIF.
-
-
-        """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " Zusatzinfos
-
-        IF ev_typedescr IS SUPPLIED.
-
-          ev_typedescr = get( dd04t = 'X' i_any = ev_type iv_langu = iv_langu ).
-
-        ENDIF.
-
-
-        IF ev_convexit IS SUPPLIED OR ev_outputlen IS SUPPLIED OR ev_length IS SUPPLIED.
-
-          FREE ls_dd04l.
-          ls_dd04l-rollname = ev_type.
-
-          READ TABLE ss_db_buffer-t_dd04l INTO ls_dd04l
-             WITH KEY rollname = ls_dd04l-rollname.
-
-          IF sy-subrc <> 0.
-            SELECT SINGLE * FROM dd04l INTO ls_dd04l
-            WHERE rollname = ls_dd04l-rollname.
-            "nehmen auch leere werte mit wir das beim nÃ¤chsten mal wissen
-            INSERT ls_dd04l INTO TABLE ss_db_buffer-t_dd04l.
-          ENDIF.
-
-
-          FREE ls_dd01l.
-          ls_dd01l-domname = ls_dd04l-domname.
-
-          READ TABLE ss_db_buffer-t_dd01l INTO ls_dd01l
-             WITH TABLE KEY domname = ls_dd01l-domname.
-
-          IF sy-subrc <> 0.
-            SELECT SINGLE * FROM dd01l  INTO ls_dd01l
-*             order by domname
-            WHERE domname = ls_dd01l-domname.
-
-            "nehmen auch leere werte mit wir das beim nÃ¤chsten mal wissen
-            INSERT ls_dd01l INTO TABLE ss_db_buffer-t_dd01l.
-          ENDIF.
-
-          ev_convexit = ls_dd01l-convexit.
-          ev_outputlen = ls_dd04l-outputlen.
-          ev_length    = ls_dd04l-leng.
-
-        ENDIF.
-
-
-        IF i_fnam_tab IS NOT INITIAL AND i_fnam_type IS NOT INITIAL.
-
-          lcl_help=>rtts_get_fieldname_by_type_tab(
-            EXPORTING
-              iv_typename = i_fnam_type
-              iv_tabname  = i_fnam_tab
-            RECEIVING
-              r_result    = ev_fieldname
-          ).
-        ENDIF.
-
-
         """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " error handling
 
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
-        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
+      catch cx_root into data(lx_root).
+        lcl_help=>handle_error( ix_root = lx_root raise_error = raise_error ).
+    endtry.
 
-  ENDMETHOD.
+  endmethod.
 
 
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>SCREEN
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] SELDATA_SET                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] SELDATA_SET_VARI               TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] SELDATA_GET                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] TITLE_SET                      TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] STATUS_SET                     TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] ELEM_SET_BY_DIRTY              TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] ELEM_SET_BY_VALUE              TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] ELEM_GET_BY_VALUE              TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] ELEM_ACTIVE                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] ELEM_INACTIVE                  TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] ELEM_INVISIBLE                 TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_ANY2                         TYPE        ANY(optional)
-* | [--->] IV_REPID                       TYPE        ANY(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] E_RESULT                       TYPE        ANY
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD screen.
+  method gui_screen.
 
-    DATA:
-      lv_name_found TYPE abap_bool,
-      lv_name       TYPE string,
-      lv_repid      TYPE string.
+    data:
+      lv_name_found type abap_bool,
+      lv_name       type string,
+      lv_repid      type string.
 
-    FIELD-SYMBOLS:
-          <lv_any> TYPE any.
+    field-symbols:
+          <lv_any> type any.
 
-    TRY.
+    try.
 
         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " diese Methode kann Screen Eigenschaften setzten/lesen
         """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-        IF iv_repid IS INITIAL.
-          info( EXPORTING iv_depth = 1 IMPORTING ev_repid = lv_repid ).
-        ELSE.
+        if iv_repid is initial.
+          info( exporting iv_depth = 1 importing ev_repid = lv_repid ).
+        else.
           lv_repid = iv_repid.
-        ENDIF.
+        endif.
 
 
-        CASE abap_true.
+        case abap_true.
 
+
+          when status.
+            data ls_sy type sy.
+            msg(
+         exporting
+           i_any        = i_any
+           i_type       = i_any2
+         importing
+           e_any         = ls_sy ).
+
+            if ls_sy-msgty ca 'EWSI'.
+            else.
+              ls_sy-msgty = 'I'.
+            endif.
+            message id ls_sy-msgid type 'S' number ls_sy-msgno
+            with ls_sy-msgv1 ls_sy-msgv2 ls_sy-msgv3 ls_sy-msgv4
+            display like ls_sy-msgty.
+
+          when status_progress.
+
+            data lv_prozent type i.
+            data lv_text type char100.
+
+            lv_text    = i_any.
+            lv_prozent = i_any2.
+
+            call function 'SAPGUI_PROGRESS_INDICATOR'
+              exporting
+                percentage = lv_prozent
+                text       = lv_text.
 
             "F4 Hilfen sind ohne PAI/PBO
             "mit diesem Befehl kÃ¶nnen trotzdem Daten transportiert werden
-          WHEN elem_get_by_value.
+          when elem_get_by_value.
 
-            DATA: dynpfields   TYPE STANDARD TABLE OF dynpread,
-                  ls_dynpfield TYPE dynpread,
-                  lv_dynname   TYPE c LENGTH 40.
+            data: dynpfields   type standard table of dynpread,
+                  ls_dynpfield type dynpread,
+                  lv_dynname   type c length 40.
 
             lv_dynname = lv_repid.
             ls_dynpfield-fieldname  = i_any.
 *            ls_dynpfield-fieldvalue = i_any2.
-            APPEND ls_dynpfield TO dynpfields.
+            append ls_dynpfield to dynpfields.
 
-            CALL FUNCTION 'DYNP_VALUES_READ'
-              EXPORTING
+            call function 'DYNP_VALUES_READ'
+              exporting
                 dyname               = lv_dynname
                 dynumb               = sy-dynnr
-              TABLES
+              tables
                 dynpfields           = dynpfields
-              EXCEPTIONS
+              exceptions
                 invalid_abapworkarea = 1
                 invalid_dynprofield  = 2
                 invalid_dynproname   = 3
@@ -5373,34 +2905,34 @@ endcase.
                 no_fielddescription  = 6
                 undefind_error       = 7
                 error_message        = 8
-                OTHERS               = 9.
-            IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-            raise_check( function = 'X' ).
+                others               = 9.
+            if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+            x_raise_check( function = 'X' ).
 
-            READ TABLE dynpfields INDEX 1
-                INTO ls_dynpfield.
+            read table dynpfields index 1
+                into ls_dynpfield.
 
             e_result = ls_dynpfield-fieldvalue.
 
 
             "F4 Hilfen sind ohne PAI/PBO
             "mit diesem Befehl kÃ¶nnen trotzdem Daten transportiert werden
-          WHEN elem_set_by_value.
+          when elem_set_by_value.
 
 *            DATA: dynpfields   TYPE STANDARD TABLE OF dynpread,
 *                  ls_dynpfield TYPE dynpread.
             lv_dynname = lv_repid.
             ls_dynpfield-fieldname  = i_any.
             ls_dynpfield-fieldvalue = i_any2.
-            APPEND ls_dynpfield TO dynpfields.
+            append ls_dynpfield to dynpfields.
 
-            CALL FUNCTION 'DYNP_VALUES_UPDATE'
-              EXPORTING
+            call function 'DYNP_VALUES_UPDATE'
+              exporting
                 dyname               = lv_dynname
                 dynumb               = sy-dynnr
-              TABLES
+              tables
                 dynpfields           = dynpfields
-              EXCEPTIONS
+              exceptions
                 invalid_abapworkarea = 1
                 invalid_dynprofield  = 2
                 invalid_dynproname   = 3
@@ -5409,65 +2941,81 @@ endcase.
                 no_fielddescription  = 6
                 undefind_error       = 7
                 error_message        = 8
-                OTHERS               = 9.
-            IF sy-subrc <> 0. sy-subrc = 99. ENDIF. "SLIN check ok without pragma
-            raise_check( function = 'X' ).
+                others               = 9.
+            if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+            x_raise_check( function = 'X' ).
 
             "Felder per Dirty Assign updaten
             "z.Bl. fÃ¼r Comments die nicht in Paramstabelle sind
-          WHEN elem_set_by_dirty.
+          when elem_set_by_dirty.
 
-            DATA(lv_assign_addr) = '(' && lv_repid && ')' && i_any.
-            ASSIGN (lv_assign_addr) TO <lv_any>.
-            IF <lv_any> IS NOT ASSIGNED.
-              raise('ZCX_FIELD_NOT_FOUND').
-            ENDIF.
+            data(lv_assign_addr) = '(' && lv_repid && ')' && i_any.
+            assign (lv_assign_addr) to <lv_any>.
+            if <lv_any> is not assigned.
+              x_raise('ZCX_FIELD_NOT_FOUND').
+            endif.
             <lv_any> = i_any2.
 
 
-          WHEN seldata_set.
+          when seldata_set.
 
             lcl_help=>selscreen_set(
-              EXPORTING
+              exporting
                 i_any       = i_any
                 iv_repid    = lv_repid
                 raise_error = abap_true ).
 
-          WHEN seldata_set_vari.
+          when seldata_set_vari.
 
-            DATA: lt_params2 TYPE rsparams_tt.
+            data lv_report_vari type c length 40.
+            data lv_vari_vari type c length 14.
 
-            screen(
-         EXPORTING
-           seldata_get       = 'X'
-           i_any             = i_any
-           iv_repid          = lv_repid
-         IMPORTING
-           e_result          = lt_params2 ).
+            lv_report_vari = lv_repid.
+            lv_vari_vari   = i_any.
 
-            screen(
-             seldata_set       = 'X'
-             i_any             = lt_params2 ).
+            call function 'RS_SUPPORT_SELECTIONS'
+              exporting
+                report               = lv_report_vari "Reportname
+                variant              = lv_vari_vari   "Variantenname
+              exceptions
+                variant_not_existent = 1
+                variant_obsolete     = 2
+                others               = 3.
+            x_raise_check( function = 'X' ).
+
+*            data: lt_params2 type rsparams_tt.
+*
+*            gui_screen(
+*         exporting
+*           seldata_get       = 'X'
+*           i_any             = i_any
+*           iv_repid          = lv_repid
+*         importing
+*           e_result          = lt_params2 ).
+*
+*            gui_screen(
+*             seldata_set       = 'X'
+*             i_any             = lt_params2 ).
 
 
-          WHEN seldata_get.
+          when seldata_get.
 
             rtti(
-              EXPORTING
+              exporting
                 i_any                  = e_result
 *                iv_name                =
 *                i_fnam_type            =
 *                i_fnam_tab             =
 *                iv_langu               = SY-LANGU
 *                raise_error            = ABAP_FALSE
-              IMPORTING
+              importing
 *                ev_kind                =
-                ev_type                =  DATA(lv_tab_type)
+                ev_type                =  data(lv_tab_type)
 *                ev_type_is_ddic        =
 *                ev_type_kind           =
 *                ev_type_kind_is_c      =
 *                ev_line_kind           =
-                ev_line_type           = DATA(lv_line_type)
+                ev_line_type           = data(lv_line_type)
 *                ev_line_type_kind      =
 *                ev_line_type_kind_is_c =
 *                ev_line_type_is_ddic   =
@@ -5486,140 +3034,1643 @@ endcase.
             ).
 
 
-            IF lv_tab_type = 'RSPARAMS_TT'
-            OR lv_line_type = 'RSPARAMS'.
+            if lv_tab_type = 'RSPARAMS_TT'
+            or lv_line_type = 'RSPARAMS'.
 *            IF 'RSPARAMS_TT' = get( rtti_type = 'X' i_any = e_result ).
 *            or 'RSPARAMS'
 
               lcl_help=>selscreen_get(
-                EXPORTING
+                exporting
                   iv_repid             = lv_repid
                   iv_variant           = i_any
                   raise_error          = abap_true
-                IMPORTING
-                  et_parameter         = DATA(lt_params) ).
+                importing
+                  et_parameter         = data(lt_params) ).
 
-              FIELD-SYMBOLS: <lt_tab> TYPE STANDARD TABLE.
-              ASSIGN e_result TO <lt_tab>.
+              field-symbols: <lt_tab> type standard table.
+              assign e_result to <lt_tab>.
 
-              LOOP AT lt_params INTO DATA(ls_param).
-                APPEND INITIAL LINE TO <lt_tab> ASSIGNING FIELD-SYMBOL(<ls_tab>).
-                MOVE-CORRESPONDING ls_param TO <ls_tab>.
-              ENDLOOP.
+              loop at lt_params into data(ls_param).
+                append initial line to <lt_tab> assigning field-symbol(<ls_tab>).
+                move-corresponding ls_param to <ls_tab>.
+              endloop.
 
-            ELSEIF cl_abap_typedescr=>kind_struct = get( rtti_kind = 'X' i_any = e_result ).
+            elseif cl_abap_typedescr=>kind_struct = get( rtti_kind = 'X' i_any = e_result ).
 
               lcl_help=>selscreen_get(
-                EXPORTING
+                exporting
                   iv_repid             = lv_repid
                   iv_variant           = i_any
                   raise_error          = abap_true
-                IMPORTING
+                importing
                   es_struc             = e_result ).
 
-            ENDIF.
+            endif.
 
 
 
-          WHEN elem_inactive OR elem_active OR elem_invisible.
+          when elem_inactive or elem_active or elem_invisible or elem_intensify.
 
             lv_name = get( trim_upper_case = 'X' i_any = i_any ).
 
-            LOOP AT SCREEN.
+            loop at screen.
 
-              IF NOT screen-name CS lv_name.
-                CONTINUE.
-              ENDIF.
+              if not screen-name cs lv_name.
+                continue.
+              endif.
 
               lv_name_found = abap_true.
 
-              CASE abap_true.
-                WHEN elem_invisible.
+              case abap_true.
+                when elem_invisible.
                   screen-active = 1.
                   screen-output = 0.
                   screen-input  = 0.
                   screen-invisible = 1.
-                WHEN elem_inactive.
+                when elem_inactive.
                   screen-input  = 0.
-              ENDCASE.
+                when elem_intensify.
+                  screen-intensified = 1.
 
-              MODIFY SCREEN.
-            ENDLOOP.
+              endcase.
 
-            IF lv_name_found = abap_false.
-              raise('ZCX_FIELD_NOT_FOUND').
-            ENDIF.
+              modify screen.
+            endloop.
+
+            if lv_name_found = abap_false.
+              x_raise('ZCX_FIELD_NOT_FOUND').
+            endif.
 
 
-          WHEN title_set.
+          when title_set.
 
-            DATA:
-                lv_title TYPE string.
+            data lv_title type string.
 
-            lv_title = i_any.
+            lv_title = msg( i_any )-text.
 
             "generischer SAP Title der auch vom cl_salv_table benutzt wird
-            SET TITLEBAR '003'
-            OF PROGRAM 'SAPLKKBL'
-            WITH lv_title.
-            raise_check( sy_subrc = 'X' ).
-            RETURN.
+            set titlebar '003'
+            of program 'SAPLKKBL'
+            with lv_title.
+            x_raise_check( sy_subrc = 'X' ).
+            return.
 
-          WHEN OTHERS.
-            raise('ZCX_WRONG_CALL_OF_METHOD').
-        ENDCASE.
+          when others.
+            x_raise('ZCX_WRONG_CALL_OF_METHOD').
+        endcase.
 
 
         """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         " error handling
 
-        DATA: lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
+        data: lx_root type ref to cx_root.
+      catch cx_root into lx_root.
         lcl_help=>handle_error( ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
+    endtry.
 
 
-  ENDMETHOD.
+  endmethod.
 
 
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_001_00_TEST=>TRANS
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] ID                             TYPE        ABAP_BOOL(optional)
-* | [--->] XML                            TYPE        ABAP_BOOL(optional)
-* | [--->] JSON                           TYPE        ABAP_BOOL(optional)
-* | [--->] PRINT                          TYPE        ABAP_BOOL(optional)
-* | [--->] ZIP                            TYPE        ABAP_BOOL(optional)
-* | [--->] UNZIP                          TYPE        ABAP_BOOL(optional)
-* | [--->] TAB_2_TAB                      TYPE        ABAP_BOOL(optional)
-* | [--->] XML_2                          TYPE        ABAP_BOOL(optional)
-* | [--->] JSON_2                         TYPE        ABAP_BOOL(optional)
-* | [--->] VALUE_2_RANGE                  TYPE        ABAP_BOOL(optional)
-* | [--->] RANGETAB_2_WHERE               TYPE        ABAP_BOOL(optional)
-* | [--->] PARAMS_2_STRUCT                TYPE        ABAP_BOOL(optional)
-* | [--->] VALUE_2_RANGETAB               TYPE        ABAP_BOOL(optional)
-* | [--->] STRING_2_STRINGTAB             TYPE        ABAP_BOOL(optional)
-* | [--->] SPLIT_WORD                     TYPE        ABAP_BOOL(optional)
-* | [--->] COPY                           TYPE        ABAP_BOOL(optional)
-* | [--->] I_ANY                          TYPE        ANY(optional)
-* | [--->] I_ANY2                         TYPE        ANY(optional)
-* | [--->] RAISE_ERROR                    TYPE        ABAP_BOOL (default =ABAP_FALSE)
-* | [<---] E_RESULT                       TYPE        ANY
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-  METHOD trans.
+  method info.
+
+    " diese Methode ermittelt diverse Informationen
+
+    clear es_callstack.
+    clear ev_log_info.
+    clear et_callstack.
+    clear ev_method.
+    clear ev_work_process_id.
+    clear ev_repid.
+
+    try.
+
+        if r_result is supplied.
+
+          info(
+            exporting
+              iv_depth           = iv_depth + 1
+              raise_error        = raise_error
+            importing
+              ev_date            =   ev_date
+              ev_time            =   ev_time
+              ev_timestampl      =   ev_timestampl
+              ev_time_iso8601    =   ev_time_iso8601
+              ev_username        =   ev_username
+              ev_log_info        =   ev_log_info
+          ).
+
+          r_result-date            = ev_date            .
+          r_result-time            = ev_time            .
+          r_result-timestampl      = ev_timestampl      .
+          r_result-time_iso8601    = ev_time_iso8601    .
+          r_result-user            = ev_username        .
+          r_result-log_info        = ev_log_info        .
+          return.
+        endif.
 
 
-    DATA:
-      lt_where   TYPE rsds_twhere,
-      ls_where   TYPE LINE OF rsds_twhere,
-      lt_params  TYPE rsds_trange,
-      lv_string  LIKE LINE OF ls_where-where_tab,
-      lv_string2 TYPE string.
-    FIELD-SYMBOLS: <ls_params>     LIKE LINE OF lt_params,
-                   <lt_any>        TYPE STANDARD TABLE,
-                   <lt_any_result> TYPE STANDARD TABLE,
-                   <ls_any_result> TYPE any,
-                   <ls_any>        TYPE any.
+
+        if ev_date is supplied
+        or ev_time is supplied
+        or ev_timestampl is supplied
+        or ev_time_iso8601 is supplied.
+
+          get time stamp field ev_timestampl.
+          convert time stamp ev_timestampl
+          time zone sy-zonlo
+          into date ev_date
+          time ev_time.
+
+          if ev_time_iso8601 is supplied.
+            "20171028163427.1811670
+            "2017-05-31T23:59:59
+
+            data:
+              lv_time_string type char200.
+
+            lv_time_string =  ev_timestampl.
+            shift lv_time_string left deleting leading ' '.
+            concatenate
+            lv_time_string(4) '-' lv_time_string+4(2) '-' lv_time_string+6(2) 'T'
+            ev_time(2) ':' ev_time+2(2) ':'  ev_time+4(2) lv_time_string+14(7)
+             into lv_time_string.
+
+            ev_time_iso8601 = lv_time_string.
+*        SHIFT iv_date_time LEFT DELETING LEADING ' '.
+*        CONCATENATE iv_date_time(4)  iv_date_time+5(2)  iv_date_time+8(2)     INTO lv_date.
+*        CONCATENATE iv_date_time+11(2) iv_date_time+14(2) iv_date_time+17(2) INTO lv_time.
+          endif.
+
+
+*          data: date type d,
+*                time type t.
+*
+*          data: year   type i,
+*                month  type i,
+*                day    type i,
+*                hour   type i,
+*                minute type i,
+*                second type i.
+*
+*          date = sy-datlo.
+*          time = sy-timlo.
+*
+*          year   = substring( val = date off = 0 len = 4 ).
+*          month  = substring( val = date off = 4 len = 2 ).
+*          day    = substring( val = date off = 6 len = 2 ).
+*          hour   = substring( val = time off = 0 len = 2 ).
+*          minute = substring( val = time off = 2 len = 2 ).
+*          second = substring( val = time off = 4 len = 2 ).
+
+
+        endif.
+
+        if e_mock is supplied.
+
+          lcl_help=>mock_data( importing e_mock = e_mock ).
+
+        endif.
+
+        if ev_log_info is supplied.
+          ev_log_info = get( log_info = 'X' ).
+        endif.
+
+*        IF ev_date_write IS SUPPLIED.
+*          WRITE sy-datum TO lv_char20.
+*          ev_date_write = lv_char20.
+*        ENDIF.
+*
+*        IF ev_time_write IS SUPPLIED.
+*          WRITE sy-uzeit TO lv_char20.
+*          ev_time_write = lv_char20.
+*        ENDIF.
+
+        """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        if ev_is_gui_active is supplied.
+
+          data:
+        lv_gui type char1.
+
+          ev_is_gui_active = abap_false.
+
+          if sy-batch = abap_false
+            and sy-binpt = abap_false.
+
+            call function 'RFC_IS_GUI_ON'
+              importing
+                on = lv_gui.
+
+            if lv_gui = 'Y'.
+              ev_is_gui_active = abap_true.
+            endif.
+          endif.
+        endif.
+
+        if ev_work_process_id is supplied.
+
+          data:
+            lv_wp_no type wpno.
+
+          call function 'TH_GET_OWN_WP_NO'
+            importing
+*             subrc =     " Return Code of the Function Module
+              wp_no = lv_wp_no    " Separate Work Process Number
+*             wp_pid   =     " PID of Separate Work Process
+*             wp_index =
+            .
+          ev_work_process_id = lv_wp_no.
+
+        endif.
+
+
+        if ev_username is supplied.
+          ev_username = sy-uname.
+        endif.
+
+        """""""""""""""""""""""""""""""
+        if es_callstack is supplied or et_callstack is supplied or et_source_code is supplied
+            or ev_repid is supplied or ev_method is supplied.
+
+          call function 'SYSTEM_CALLSTACK'
+            exporting
+              max_level = '0'
+            importing
+              callstack = et_callstack.
+
+          "delete this method
+          delete et_callstack index 1.
+          if iv_depth is not initial.
+            data: lv_count type i.
+            lv_count = iv_depth.
+            do lv_count times.
+              delete et_callstack index 1.
+            enddo.
+          endif.
+
+          read table et_callstack into es_callstack
+              index 1.
+
+          ev_repid = es_callstack-mainprogram.
+          ev_method = es_callstack-blockname.
+
+        endif.
+
+        if et_source_code is supplied.
+
+          data:
+            lo_wb_source    type ref to cl_wb_source,
+            lv_name_program type trdir-name.
+
+          lv_name_program = es_callstack-include. "iv_name_program.
+
+          create object lo_wb_source
+            exporting
+              source_name = lv_name_program.    " physical name.
+
+
+          lo_wb_source->read_source(
+            importing
+              source_tab = et_source_code "Source Code
+            exceptions
+              cancelled                     = 1
+              not_found                     = 2
+              read_protected                = 3
+              enhancement_locked            = 4
+              others                        = 6 ).
+          if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+
+        endif.
+
+
+        if et_dequeue_table is supplied.
+
+          et_dequeue_table =  lcl_help=>lock_get_snap( ).
+
+        endif.
+
+
+
+
+
+        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        " error handling
+
+        data: lx_root type ref to cx_root.
+      catch cx_root into lx_root.
+        lcl_help=>handle_error( ix_root = lx_root raise_error = raise_error ).
+    endtry.
+
+  endmethod.
+
+
+  method itab.
+
+    try.
+
+        field-symbols:
+          <ls_tab>    type any,
+          <ls_tab_in> type any,
+          <lt_result> type standard table.
+
+        data:
+          lt_r_tab type ref to data.
+
+        create data lt_r_tab
+         like ct_tab.
+
+        assign lt_r_tab->* to <lt_result>.
+
+
+        case abap_true.
+
+          when change_sequence.
+
+            while ct_tab is not initial.
+              append initial line to <lt_result> assigning <ls_tab>.
+
+              read table ct_tab assigning <ls_tab_in>
+               index lines( ct_tab ).
+              <ls_tab> = <ls_tab_in>.
+
+              delete ct_tab index lines( ct_tab ).
+            endwhile.
+
+
+          when delete_duplicates.
+
+            sort ct_tab.
+            delete adjacent duplicates from ct_tab comparing all fields.
+            <lt_result> = ct_tab.
+
+          when others.
+            x_raise('ZCX_WRONG_METHOD_CALL').
+        endcase.
+
+
+        clear ct_tab.
+        ct_tab = <lt_result>.
+
+
+        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        " error handling
+
+        data: lx_root type ref to cx_root.
+      catch cx_root into lx_root.
+        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
+    endtry.
+
+  endmethod.
+
+
+  method json.
+
+    data lt_tab type standard table of string.
+    data lv_json_line type string.
+    data lv_type type string.
+    data lv_kind type string.
+    field-symbols <any> type any.
+
+
+    try.
+
+        if abap_true = json_2.
+
+          if i_any is initial.
+            x_raise('ZCX_INPUT_DATA_IS_INITIAL_ERROR').
+          endif.
+
+          trans(
+            exporting
+              json_2             = 'X'
+              i_any              = i_any
+            importing
+              e_result           = lt_tab
+          ).
+
+          clear lv_json_line.
+          if e_any1 is supplied or e_ref1 is supplied or e_type1 is supplied or e_kind1 is supplied.
+            read table lt_tab into lv_json_line
+                index 1.
+            x_raise_check(  read_table = 'X' ).
+
+            read table lt_tab into lv_kind
+          index 2.
+            x_raise_check(  read_table = 'X' ).
+            read table lt_tab into lv_type
+                index 3.
+            x_raise_check(  read_table = 'X' ).
+
+            e_type1 = lv_type.
+            e_kind1 = lv_kind.
+
+            if e_any1 is supplied.
+
+              trans(
+        exporting
+          json_2             = 'X'
+          i_any              = lv_json_line
+        importing
+          e_result           = e_any1
+      ).
+
+            endif.
+
+            if e_ref1 is supplied.
+              case lv_kind.
+
+                when cl_abap_datadescr=>kind_ref.
+
+                  trans(
+                      exporting
+                          json_2 = 'X'
+                          i_any  = lv_json_line
+                      importing
+                          e_result = e_ref1
+                              ).
+
+                when others.
+
+                  create data e_ref1
+                    type (lv_type).
+
+                  assign e_ref1->* to <any>.
+
+                  trans(
+                   exporting
+                     json_2             = 'X'
+                     i_any              = lv_json_line
+                   importing
+                     e_result           = <any>
+                 ).
+
+              endcase.
+
+            endif.
+
+          endif.
+
+          clear lv_json_line.
+          if e_any2 is supplied or e_ref2 is supplied or e_type2 is supplied or e_kind2 is supplied..
+            read table lt_tab into lv_json_line
+                index 4.
+            x_raise_check(  read_table = 'X' ).
+
+            read table lt_tab into lv_kind
+          index 5.
+            x_raise_check(  read_table = 'X' ).
+            read table lt_tab into lv_type
+                index 6.
+            x_raise_check(  read_table = 'X' ).
+
+            e_type2 = lv_type.
+            e_kind2 = lv_kind.
+
+            if e_any2 is supplied.
+
+              trans(
+        exporting
+          json_2             = 'X'
+          i_any              = lv_json_line
+        importing
+          e_result           = e_any2
+      ).
+
+            endif.
+
+            if e_ref2 is supplied.
+              case lv_kind.
+
+                when cl_abap_datadescr=>kind_ref.
+
+                  trans(
+                      exporting
+                          json_2 = 'X'
+                          i_any  = lv_json_line
+                      importing
+                          e_result = e_ref2
+                              ).
+
+                when others.
+
+                  create data e_ref2
+                    type (lv_type).
+
+                  assign e_ref2->* to <any>.
+
+                  trans(
+                   exporting
+                     json_2             = 'X'
+                     i_any              = lv_json_line
+                   importing
+                     e_result           = <any>
+                 ).
+
+              endcase.
+
+            endif.
+
+          endif.
+
+          clear lv_json_line.
+          if e_any3 is supplied or e_ref3 is supplied or e_type3 is supplied or e_kind3 is supplied.
+            read table lt_tab into lv_json_line
+                index 7.
+            x_raise_check(  read_table = 'X' ).
+
+            read table lt_tab into lv_kind
+          index 8.
+            x_raise_check(  read_table = 'X' ).
+            read table lt_tab into lv_type
+                index 9.
+            x_raise_check(  read_table = 'X' ).
+
+            e_type3 = lv_type.
+            e_kind3 = lv_kind.
+
+            if e_any3 is supplied.
+
+              trans(
+        exporting
+          json_2             = 'X'
+          i_any              = lv_json_line
+        importing
+          e_result           = e_any3
+      ).
+
+            endif.
+
+            if e_ref3 is supplied.
+              case lv_kind.
+
+                when cl_abap_datadescr=>kind_ref.
+
+                  trans(
+                      exporting
+                          json_2 = 'X'
+                          i_any  = lv_json_line
+                      importing
+                          e_result = e_ref3
+                              ).
+
+                when others.
+
+                  create data e_ref3
+                    type (lv_type).
+
+                  assign e_ref3->* to <any>.
+
+                  trans(
+                   exporting
+                     json_2             = 'X'
+                     i_any              = lv_json_line
+                   importing
+                     e_result           = <any>
+                 ).
+
+              endcase.
+            endif.
+          endif.
+
+
+          clear lv_json_line.
+          if e_any4 is supplied or e_ref4 is supplied or e_type4 is supplied or e_kind4 is supplied..
+            read table lt_tab into lv_json_line
+                index 10.
+            x_raise_check(  read_table = 'X' ).
+
+            read table lt_tab into lv_kind
+          index 11.
+            x_raise_check(  read_table = 'X' ).
+            read table lt_tab into lv_type
+                index 12.
+            x_raise_check(  read_table = 'X' ).
+
+            e_type4 = lv_type.
+            e_kind4 = lv_kind.
+
+            if e_any4 is supplied.
+
+              trans(
+        exporting
+          json_2             = 'X'
+          i_any              = lv_json_line
+        importing
+          e_result           = e_any4
+      ).
+
+            endif.
+
+            if e_ref4 is supplied.
+              case lv_kind.
+
+                when cl_abap_datadescr=>kind_ref.
+
+                  trans(
+                      exporting
+                          json_2 = 'X'
+                          i_any  = lv_json_line
+                      importing
+                          e_result = e_ref4
+                              ).
+
+                when others.
+
+                  create data e_ref4
+                    type (lv_type).
+
+                  assign e_ref4->* to <any>.
+
+                  trans(
+                   exporting
+                     json_2             = 'X'
+                     i_any              = lv_json_line
+                   importing
+                     e_result           = <any>
+                 ).
+
+              endcase.
+
+            endif.
+
+          endif.
+
+          clear lv_json_line.
+          if e_any5 is supplied or e_ref5 is supplied or e_type5 is supplied or e_kind5 is supplied..
+            read table lt_tab into lv_json_line
+                index 13.
+            x_raise_check(  read_table = 'X' ).
+
+            read table lt_tab into lv_kind
+          index 14.
+            x_raise_check(  read_table = 'X' ).
+            read table lt_tab into lv_type
+                index 15.
+            x_raise_check(  read_table = 'X' ).
+
+            e_type5 = lv_type.
+            e_kind5 = lv_kind.
+
+            if e_any5 is supplied.
+
+              trans(
+        exporting
+          json_2             = 'X'
+          i_any              = lv_json_line
+        importing
+          e_result           = e_any5
+      ).
+
+            endif.
+
+            if e_ref5 is supplied.
+              case lv_kind.
+
+                when cl_abap_datadescr=>kind_ref.
+
+                  trans(
+                      exporting
+                          json_2 = 'X'
+                          i_any  = lv_json_line
+                      importing
+                          e_result = e_ref5
+                              ).
+
+                when others.
+
+                  create data e_ref5
+                    type (lv_type).
+
+                  assign e_ref5->* to <any>.
+
+                  trans(
+                   exporting
+                     json_2             = 'X'
+                     i_any              = lv_json_line
+                   importing
+                     e_result           = <any>
+                 ).
+
+              endcase.
+
+            endif.
+
+          endif.
+
+
+        else.
+
+          insert get( json = 'X' i_any = i_any )      into table lt_tab.
+          insert get( rtti_kind = 'X' i_any = i_any ) into table lt_tab.
+          insert get( rtti_type = 'X' i_any = i_any ) into table lt_tab.
+
+          insert get( json = 'X' i_any = i_any2 )      into table lt_tab.
+          insert get( rtti_kind = 'X' i_any = i_any2 ) into table lt_tab.
+          insert get( rtti_type = 'X' i_any = i_any2 ) into table lt_tab.
+
+          insert get( json = 'X' i_any = i_any3 )      into table lt_tab.
+          insert get( rtti_kind = 'X' i_any = i_any3 ) into table lt_tab.
+          insert get( rtti_type = 'X' i_any = i_any3 ) into table lt_tab.
+
+          insert get( json = 'X' i_any = i_any4 )      into table lt_tab.
+          insert get( rtti_kind = 'X' i_any = i_any4 ) into table lt_tab.
+          insert get( rtti_type = 'X' i_any = i_any4 ) into table lt_tab.
+
+          insert get( json = 'X' i_any = i_any5 )      into table lt_tab.
+          insert get( rtti_kind = 'X' i_any = i_any5 ) into table lt_tab.
+          insert get( rtti_type = 'X' i_any = i_any5 ) into table lt_tab.
+
+          e_any1 = get( json = 'X' i_any = lt_tab ).
+
+        endif.
+
+      catch cx_root into data(lx_root).
+        lcl_help=>handle_error(
+            ix_root      = lx_root
+            raise_error  = raise_error
+        ).
+    endtry.
+  endmethod.
+
+
+  method log.
+
+    data lt_balmt type ty-t_bal.
+
+    r_result = me.
+
+    data(lt_bapi) = msg(
+       exporting
+         i_any        = i_any
+         i_id         = i_id
+         i_no         = i_no
+         i_type       = i_type
+         i_v1         = i_v1
+         i_v2         = i_v2
+         i_v3         = i_v3
+         i_v4         = i_v4
+         i_langu      = i_langu
+         raise_error  = abap_false
+       importing
+         e_any         = lt_balmt
+     )-t_bapi.
+
+    insert lines of lt_bapi into table ms-t_log.
+
+    info(
+      importing
+        ev_timestampl      = data(lv_time_stmp)
+    ).
+
+    loop at lt_balmt assigning field-symbol(<ls_bal>).
+      <ls_bal>-time_stmp = lv_time_stmp.
+    endloop.
+
+    insert lines of lt_balmt into table ms-t_bal.
+
+
+  endmethod.
+
+
+  method msg.
+
+    data:
+      lt_bapiret_result type bapiret2_tab,
+      ls_result         type bapiret2,
+      lv_msgvar_check   type abap_bool.
+
+    "Ermitteln von Messageinformationen aus beliebigen Daten und Objekten
+    "Wenn keine Nachrichtenklasse ermittelt werden kann, wird nach Text gesucht
+    "Mapping auf beliebige Ausgabeparameter
+
+    "speed up
+    if i_id is initial and i_no is initial and i_any is initial.
+      return.
+    endif.
+
+    try.
+        """""""""""""""""""""""""""""""""""
+        " id/no ermitteln
+
+        if i_id is not initial and i_no is not initial.
+          ls_result-number = i_no.
+          ls_result-id     = i_id.
+          insert ls_result into table r_result-t_bapi.
+        endif.
+
+        if i_any is not initial.
+
+          lt_bapiret_result = lcl_help=>t100_get( i_any ).
+          insert lines of lt_bapiret_result into table r_result-t_bapi.
+          if r_result-t_bapi is initial and use_t100_only = abap_false.
+
+            "Text auch mit Klartext ermitteln
+            data(lo_typedescr) = cl_abap_typedescr=>describe_by_data( i_any ).
+            if lo_typedescr->kind = cl_abap_datadescr=>kind_elem.
+
+              "Standard umwandeln
+              ls_result = lcl_help=>t100_get_w_text(
+                                      iv_text = i_any
+                                      iv_v1 = i_v1
+                                      iv_v2 = i_v2
+                                      iv_v3 = i_v3
+                                      iv_v4 = i_v4 ).
+
+              lv_msgvar_check = abap_true.
+              insert ls_result into table r_result-t_bapi.
+
+            endif.
+          endif.
+        endif.
+
+
+        """""""""""""""""""""""""""""""""""
+        " Msginfo gefunden?
+
+        read table r_result-t_bapi assigning field-symbol(<ls_result>) index 1.
+        if sy-subrc <> 0.
+          raise exception type lcx_no_check.
+        endif.
+
+        "Messagevariablen u Type aus inputvariablen setzten (wenn vorhanden)
+        if lv_msgvar_check = abap_false.
+          if <ls_result>-message_v1 is initial and i_v1 is not initial.
+            <ls_result>-message_v1 = get( print ='X' i_any = i_v1 ).
+          endif.
+          if <ls_result>-message_v2 is initial and i_v2 is not initial..
+            <ls_result>-message_v2 = get( print ='X' i_any = i_v2 ).
+          endif.
+          if <ls_result>-message_v3 is initial and i_v3 is not initial..
+            <ls_result>-message_v3 = get( print ='X' i_any = i_v3 ).
+          endif.
+          if <ls_result>-message_v4 is initial and i_v4 is not initial..
+            <ls_result>-message_v4 = get( print ='X' i_any = i_v4 ).
+          endif.
+        endif.
+        if i_type is not initial.
+          <ls_result>-type = i_type.
+        endif.
+
+
+        """""""""""""""""""""""""""""""""""
+        " Text bestimmen
+
+        loop at r_result-t_bapi assigning <ls_result>.
+
+          <ls_result>-message = get_bus( t100_text_by_no_id = 'X'
+                                       iv_langu = i_langu
+                                       i_any    = <ls_result>-number
+                                       i_any2   = <ls_result>-id ).
+
+          <ls_result>        = lcl_help=>t100_replace_placeholder( <ls_result> )  .
+          <ls_result>-type   = get( trim_upper_case = 'X' i_any = <ls_result>-type ).
+          <ls_result>-id     = get( trim_upper_case = 'X' i_any = <ls_result>-id ).
+          <ls_result>-number = get( trim_upper_case = 'X' i_any = <ls_result>-number ).
+
+          if <ls_result>-type = 'E'.
+            data(lv_is_error) = abap_true.
+            exit.
+          endif.
+
+          if <ls_result>-type = 'W'.
+            data(lv_is_warning) = abap_true.
+          endif.
+
+          if <ls_result>-type = 'S'.
+            data(lv_is_success) = abap_true.
+          endif.
+
+        endloop.
+
+
+        """""""""""""""""""""""""""""""
+        " Ausgabe vorbereiten
+
+        if lv_is_error = abap_true.
+          r_result-type = 'E'.
+        elseif lv_is_warning = abap_true.
+          r_result-type = 'W'.
+        elseif lv_is_success = abap_true.
+          r_result-type = 'S'.
+        endif.
+
+        r_result-noid = <ls_result>-number.
+        concatenate  r_result-noid '(' <ls_result>-id ')' into r_result-noid.
+
+        if e_any is supplied.
+
+          clear e_any.
+          lcl_help=>t100_set(
+                  exporting it_bapi = r_result-t_bapi
+                  importing e_any   = e_any ).
+
+        endif.
+
+        if e_any_add is supplied.
+
+          lcl_help=>t100_set(
+                  exporting it_bapi = r_result-t_bapi
+                  importing e_any   = e_any_add ).
+
+        endif.
+
+        if r_result is supplied.
+          r_result-s_bapi = r_result-t_bapi[ 1 ].
+          if  r_result-type = 'E'.
+            r_result-is_error = abap_true.
+          endif.
+          r_result-text     = r_result-s_bapi-message.
+          r_result-s_balm-msgid = r_result-s_bapi-id.
+          r_result-s_balm-msgno = r_result-s_bapi-number.
+          r_result-s_balm-msgty = r_result-type.
+          r_result-s_balm-msgv1 = r_result-s_bapi-message_v1.
+          r_result-s_balm-msgv2 = r_result-s_bapi-message_v2.
+          r_result-s_balm-msgv3 = r_result-s_bapi-message_v3.
+          r_result-s_balm-msgv4 = r_result-s_bapi-message_v4.
+          info( importing ev_timestampl = r_result-s_balm-time_stmp ).
+
+        endif.
+
+
+        "Message Befehl
+*        loop at r_result-t_bapi into data(ls_log_msg).
+*
+*          "Watchpoint auf Message soll hier stehenbleiben
+*          if ls_log_msg-type cn 'EWSI'.
+*            ls_log_msg-type = 'I'.
+*          endif.
+*          message id ls_log_msg-id
+*          type ls_log_msg-type
+*          number ls_log_msg-number
+*          with ls_log_msg-message_v1 ls_log_msg-message_v2 ls_log_msg-message_v3 ls_log_msg-message_v4
+*          into data(lv_dummy).
+*        endloop.
+
+
+        """""""""""""""""""""""""""""""
+        " error handling
+
+        data  lx_root type ref to cx_root.
+      catch cx_root into lx_root.
+        clear r_result.
+        lcl_help=>handle_error(
+               ix_root = lx_root raise_error = raise_error
+               raise_assert = abap_false ).
+    endtry.
+
+  endmethod.
+
+
+  method rtti.
+
+    data:
+      lo_class       type ref to cl_abap_classdescr,
+      lo_class_super type ref to cl_abap_classdescr,
+      lo_ref         type ref to cl_abap_refdescr,
+      lo_descr_ref   type ref to cl_abap_typedescr,
+      lo_obj         type ref to cl_abap_objectdescr.
+
+    try.
+
+        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        " Kind bestimmen
+
+        data: lo_descr type ref to cl_abap_typedescr.
+
+        if i_any is supplied.
+          lo_descr = cl_abap_typedescr=>describe_by_data( i_any ).
+        elseif iv_name is not initial.
+          cl_abap_typedescr=>describe_by_name(
+             exporting
+               p_name       = iv_name " Type name
+             receiving
+               p_descr_ref  =  lo_descr   " Reference to description object
+             exceptions
+               type_not_found = 1
+               others         = 2 ).
+          if sy-subrc <> 0. sy-subrc = 99. endif. "SLIN check ok without pragma
+          x_raise_check( method = 'X' ).
+        else.
+          x_raise('ZCX_METHOD_CALL_W_INPUT_INITIAL').
+        endif.
+
+        ev_kind = lo_descr->kind.
+
+
+        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        "method speed up: nur weiter durchlaufen wenn auch was anderes gebraucht wird
+
+        if ev_type    is not supplied
+         and  ev_type_kind         is not supplied
+         and  ev_type_abap         is not supplied
+         and  ev_type_is_ddic      is not supplied
+         and  ev_line_kind         is not supplied
+         and  ev_type_kind_is_c    is not supplied
+         and  ev_line_type         is not supplied
+         and  ev_line_type_kind    is not supplied
+         and  ev_line_type_kind_is_c is not supplied
+         and  ev_line_type_is_ddic is not supplied
+         and  ev_ref_dyn           is not supplied
+         and  ev_ref_stat          is not supplied
+         and  ev_ref_super         is not supplied
+         and  et_ref_super         is not supplied
+         and  !et_comp             is not supplied
+         and  !et_domrange         is not supplied
+         and  !ev_convexit         is not supplied
+         and  !ev_in_domr          is not supplied
+         and  !ev_fieldname        is not supplied
+         and  !ev_typedescr        is not supplied
+         and  !ev_outputlen        is not supplied
+         and  eo_handle            is not supplied
+         and  ev_length            is not supplied
+         and r_result              is not supplied
+         and ev_table_type         is not supplied.
+          return.
+        endif.
+
+        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        "Typinfos bestimmen
+
+        case lo_descr->kind.
+
+          when cl_abap_typedescr=>kind_elem.
+
+            data lo_elem type ref to cl_abap_elemdescr.
+            lo_elem     ?=  lo_descr.
+            ev_type      = lo_elem->get_relative_name(  ).
+            ev_type_kind = lo_elem->type_kind.
+
+            if lo_elem->is_ddic_type(  ) = abap_true.
+              ev_type_is_ddic = abap_true.
+            endif.
+
+            case ev_type_kind.
+              when cl_abap_typedescr=>typekind_char
+              or cl_abap_typedescr=>typekind_string
+              or cl_abap_typedescr=>typekind_num
+              or cl_abap_typedescr=>typekind_clike
+              or cl_abap_typedescr=>typekind_csequence.
+
+                ev_type_kind_is_c = abap_true.
+            endcase.
+
+          when cl_abap_typedescr=>kind_struct.
+
+            data lo_struct type ref to cl_abap_structdescr.
+            lo_struct   ?= lo_descr.
+            ev_type      = lo_struct->get_relative_name(  ).
+            ev_type_kind = lo_struct->type_kind.
+            if lo_struct->is_ddic_type(  ) = abap_true.
+              ev_type_is_ddic = abap_true.
+            endif.
+
+            et_comp = lo_struct->get_components(  ).
+            eo_handle = lo_struct->create( p_components =  et_comp ).
+
+          when cl_abap_typedescr=>kind_table.
+
+            data: lo_tab type ref to cl_abap_tabledescr.
+            lo_tab ?= lo_descr.
+
+            ev_type      = lo_tab->get_relative_name(  ).
+            ev_type_kind = lo_tab->type_kind.
+            if lo_tab->is_ddic_type(  ) = abap_true.
+              ev_type_is_ddic = abap_true.
+            endif.
+            ev_table_type = lo_tab->table_kind.
+
+            data lo_descr_line type ref to cl_abap_structdescr.
+
+            lo_descr = lo_tab->get_table_line_type(  ).
+            ev_line_kind      = lo_descr->kind.
+            ev_line_type      = lo_descr->get_relative_name(  ).
+            ev_line_type_kind = lo_descr->type_kind.
+            if lo_descr->is_ddic_type(  ) = abap_true.
+              ev_line_type_is_ddic = abap_true.
+            endif.
+
+            try.
+                lo_descr_line ?= lo_descr.
+                eo_handle = lo_tab->create( p_line_type =  lo_descr_line ).
+              catch cx_root.
+            endtry.
+
+            case ev_line_type_kind.
+              when cl_abap_datadescr=>typekind_csequence
+              or cl_abap_datadescr=>typekind_char
+              or cl_abap_datadescr=>typekind_clike
+              or cl_abap_datadescr=>typekind_string.
+                ev_line_type_kind_is_c = abap_true.
+            endcase.
+
+          when cl_abap_typedescr=>kind_class.
+
+            lo_class ?= lo_descr.
+            ev_ref_stat =  lo_class->absolute_name+7.
+            ev_type     = ev_ref_stat.
+
+            if et_ref_super is supplied or ev_ref_super is supplied.
+
+              lo_class_super = lo_class.
+              while lo_class_super is bound.
+                if '\CLASS=OBJECT' = lo_class_super->absolute_name.
+                  exit.
+                endif.
+                ev_ref_super = lo_class_super->absolute_name+7.
+                append ev_ref_super to et_ref_super.
+                lo_class_super = lo_class_super->get_super_class_type(  ).
+              endwhile.
+
+            endif.
+
+            return.
+
+          when cl_abap_typedescr=>kind_ref.
+
+            lo_ref ?= cl_abap_typedescr=>describe_by_data( i_any ).
+            lo_descr_ref = lo_ref->get_referenced_type(  ).
+            ev_ref_stat  = lo_descr_ref->absolute_name+7.
+            ev_type      = ev_ref_stat.
+
+            if et_ref_super is supplied or ev_ref_super is supplied.
+
+              lo_class ?= lo_descr_ref.
+              lo_class_super = lo_class.
+              while lo_class_super is bound.
+                if '\CLASS=OBJECT' = lo_class_super->absolute_name.
+                  exit.
+                endif.
+                ev_ref_super = lo_class_super->absolute_name+7.
+                append ev_ref_super to et_ref_super.
+                lo_class_super = lo_class_super->get_super_class_type(  ).
+              endwhile.
+
+            endif.
+
+            if i_any is bound and ( ev_ref_dyn is supplied or et_ref_super is supplied ).
+
+              lo_obj ?= cl_abap_typedescr=>describe_by_object_ref( i_any ).
+              ev_ref_dyn = lo_obj->absolute_name+7.
+
+              if et_ref_super is supplied.
+                clear et_ref_super.
+                lo_class ?= lo_obj.
+                lo_class_super = lo_class.
+                while lo_class_super is bound.
+                  if '\CLASS=OBJECT' = lo_class_super->absolute_name.
+                    exit.
+                  endif.
+                  ev_ref_super = lo_class_super->absolute_name+7.
+                  append ev_ref_super to et_ref_super.
+                  lo_class_super = lo_class_super->get_super_class_type(  ).
+                endwhile.
+
+              endif.
+
+            endif.
+
+            return.
+        endcase.
+
+
+        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        "method speed up: nur weiter durchlaufen wenn auch was anderes gebraucht wird
+
+        if
+         !et_comp      is not supplied and
+         !et_domrange  is not supplied and
+         !ev_convexit  is not supplied and
+         !ev_in_domr   is not supplied and
+         !ev_fieldname is not supplied and
+         !ev_typedescr is not supplied and
+         !ev_outputlen is not supplied and
+         ev_length     is not supplied and
+         eo_handle     is not supplied and
+         r_result      is not supplied.
+          return.
+        endif.
+
+
+        """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        " Zusatzinfos
+
+        if ev_typedescr is supplied.
+
+          ev_typedescr = get( dd04t = 'X' i_any = ev_type iv_langu = iv_langu ).
+
+        endif.
+
+        if ev_convexit is supplied or ev_outputlen is supplied or ev_length is supplied.
+
+          ev_domname       = get_bus( dd04l_domname_by_rollname = 'X' i_any = ev_type ).
+          ev_convexit      = get_bus( dd01l_convexit_by_domname = 'X' i_any = ev_domname ).
+          ev_outputlen     = get_bus( dd04l_outputlen_by_rollname = 'X' i_any = ev_type ).
+          ev_length        = get_bus( dd04l_leng_by_rollname = 'X' i_any = ev_type ). .
+
+        endif.
+
+        if i_fnam_tab is not initial and i_fnam_type is not initial.
+
+          ev_fieldname = lcl_help=>rtts_get_fieldname_by_type_tab(
+               iv_typename = i_fnam_type
+               iv_tabname  = i_fnam_tab ).
+        endif.
+
+
+        if r_result is supplied.
+          r_result-handle = eo_handle.
+
+          "...
+          "...
+          "...
+          "...
+
+        endif.
+
+
+        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        " error handling
+
+        data: lx_root type ref to cx_root.
+      catch cx_root into lx_root.
+        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
+    endtry.
+
+  endmethod.
+
+
+  method service.
+
+    "Lesen der Datenbank ueber verschiedene Services
+    "Business Log, GOS Objekte, SO10 Texte, Vari Tab usw
+    try.
+
+        case crud.
+
+          when cs-s_crud-read.
+
+            case abap_true.
+
+              when all.
+                "Generisches Lesen von Daten aus DB
+
+                data lv_data type string.
+
+                service( exporting crud = crud vari = 'X' raise_error = 'X' i_key1 = i_key1 i_key2 = i_key2 i_key3 = i_key3
+                         importing e_result = lv_data ).
+
+                "Daten von flache Form in Zieltyp
+                trans( exporting xml_2 = 'X'
+                 unzip = 'X'
+                  i_any = lv_data
+                       importing e_result = e_result  ).
+
+              when file.
+
+                data lv_xstring type xstring.
+                data lv_directory type string.
+                lv_directory = i_any.
+                lv_xstring = lcl_help=>service_file_read( lv_directory ).
+                e_result = lv_xstring.
+
+              when gos_head.
+                "Generic Object Services - GOS
+                "read head infos for a specific document
+
+                data ls_link type obl_s_link.
+                data ls_gos_head_result type sofolenti1 .
+
+                ls_link-instid_b = i_key1. "FOL27000000000004EXT44000000000100
+                ls_gos_head_result = lcl_help=>gos_read_object_head( ls_link  ).
+                e_result = ls_gos_head_result.
+
+
+              when gos_content.
+                "Generic Object Services - GOS
+                "read a specific document Content
+
+                data lv_gos_result type xstring.
+
+                ls_link-instid_b = i_key1. "FOL27000000000004EXT44000000000100
+                lv_gos_result    = lcl_help=>gos_read_object_content( ls_link ).
+                e_result         = lv_gos_result.
+
+
+              when gos_list.
+                "Generic Object Services - GOS
+                "get list of all docuemts
+
+                data lv_instid type  sibflporb-instid.
+                data lv_typeid type sibflporb-typeid.
+                data lv_catid type sibflporb-catid.
+                data lt_gos_list_result type obl_t_link.
+
+                lv_instid = i_key1. " '0010270682'
+                lv_typeid = i_key2. " 'BUS2105'
+                lv_catid  = i_key3. " 'BO'
+
+                lt_gos_list_result =  lcl_help=>gos_read_object_list(
+                                         iv_instid      = lv_instid
+                                         iv_typeid      = lv_typeid
+                                         iv_catid       = lv_catid  ).
+
+                e_result = lt_gos_list_result.
+
+
+              when vari.
+                "VARI Tabelle für Selektionsvarianten
+                "generische Ablage für unstrukturierte Daten
+
+                data lv_key type c length 54.
+                data lv_string type string.
+
+                lv_string = get( trim = 'X' i_any = i_key1 ) &&
+                            get( trim = 'X' i_any = i_key2 ) &&
+                            get( trim = 'X' i_any = i_key3 ).
+                lv_key(54) = lv_string.
+
+                do( free_sy = 'X').
+                import data = lv_data from database vari(z1) client sy-mandt id lv_key.
+                x_raise_check( sy_subrc = 'X' i_head = 'ZCX_READ_DATABASE_VARI_ERROR' ).
+
+                if check( convertible = 'X' i_any = e_result i_any2 = lv_data ) = abap_true.
+                  e_result = lv_data.
+                else.
+                  x_raise('ZCX_WRONG_TYPE_OF_OUTPUT').
+                endif.
+
+
+              when so10.
+                "SO10 Texte
+                "read a specific text
+
+                data lv_object type thead-tdobject.
+                data lv_name   type thead-tdname.
+                data lv_id     type thead-tdid.
+                data lv_langu  type thead-tdspras.
+                data lt_so10_result type string_table.
+
+                lv_object = i_key1. " 'VBBK'
+                lv_id     = i_key2. " '0002' Type
+                lv_name   = i_key3. " '0030000000' Auftrag
+                lv_langu  = i_key4. " 'E'
+
+                lcl_help=>so10_read(
+                exporting
+                    i_key1   = lv_object
+                    i_key2   = lv_id
+                    i_key3   = lv_name
+                    i_key4   = lv_langu
+                importing
+                  e_result = lt_so10_result ).
+
+                e_result = lt_so10_result.
+
+              when bal_list.
+
+                data lt_list type balhdr_t.
+                data lt_list_result type standard table of balhdr.
+
+                lcl_help=>bal_read_list(
+                  exporting
+                     iv_object    = i_key1
+                    iv_subobject = i_key2
+                    iv_extnumber = i_key3
+                  receiving
+                    rt_list      = lt_list
+                ).
+
+                loop at lt_list into data(ls_list).
+                  insert ls_list into table lt_list_result.
+                endloop.
+
+                e_result = lt_list_result.
+
+              when bal.
+                "Business Application Log - BAL
+                "read a specific log
+
+                lcl_help=>bal_read(
+                  exporting
+                    iv_object    = i_key1
+                    iv_subobject = i_key2
+                    iv_extnumber = i_key3
+                    iv_lognumber = i_key4
+                  receiving
+                    rt_balmt     = data(lt_balmt) ).
+
+                if 'BALM' = get(  rtti_type_line = 'X' i_any = e_result ).
+                  field-symbols <lt_any> type any table.
+                  assign e_result to <lt_any>.
+                  loop at lt_balmt into data(ls_balm).
+                    insert ls_balm into table <lt_any>.
+                  endloop.
+*            if 'BALM_T' = get(  rtti_type = 'X' i_any = e_result ).
+*              e_result = lt_balmt.
+                else.
+                  msg( exporting i_any = lt_balmt
+                       importing e_any = e_result ).
+                  itab( exporting change_sequence = 'X'
+                        changing  ct_tab          = e_result  ).
+                endif.
+
+
+              when others.
+                x_raise('ZCX_WRONG_CALL_OF_METHOD').
+            endcase.
+
+          when cs-s_crud-update.
+
+            case abap_true.
+
+              when all.
+
+                lv_data = get( xml = 'X' i_any = i_any   raise_error = 'X' ).
+                lv_data = get( zip = 'X' i_any = lv_data raise_error = 'X').
+                service( crud = crud vari = 'X' i_key1 = i_key1 i_key2 = i_key2 i_key3 = i_key3
+                         commit = commit raise_error = abap_true i_any = lv_data ).
+
+              when gos_content.
+
+                lcl_help=>gos_create_object(
+                  iv_data           = i_any
+                  iv_instid         = i_key1 "i_gs_object-instid
+                  iv_typeid         = i_key2 "gs_object-typeid
+                  iv_catid          = i_key3 "gs_object-catid
+                  iv_filename_w_ext = i_key4 "i_any2 "'example.pdf'
+                  commit_work       = commit
+                  ).
+
+
+              when file.
+
+*               data lv_xstring type xstring.
+*               data lv_directory type string.
+                lv_directory = i_any.
+                lv_xstring = i_any2.
+                lcl_help=>service_file_update( iv_direct = lv_directory i_data = lv_xstring ).
+
+              when vari.
+
+                data lv_key2 type c length 54.
+                data lv_string2 type string.
+
+                lv_string2 = get( trim = 'X' i_any = i_key1 ) &&
+                             get( trim = 'X' i_any = i_key2 ) &&
+                             get( trim = 'X' i_any = i_key3 ).
+                lv_key2(54) = lv_string2.
+
+                trans( exporting id = 'X' i_any = i_any raise_error = 'X'
+                       importing e_result = lv_data ).
+
+                do( free_sy = 'X').
+                export data = lv_data to database vari(z1) client sy-mandt id lv_key2.
+                x_raise_check( sy_subrc = 'X' ).
+
+
+              when bal.
+
+                data:
+                  ls_log    type bal_s_log.
+
+                ls_log-object    = i_key1.
+                ls_log-subobject = i_key2.
+                ls_log-extnumber = i_key3.
+
+                lcl_help=>bal_save(  i_any = i_any i_any2 = i_any2 is_log = ls_log ).
+
+
+              when bal.
+
+                data: lv_key_bal_indx type c length 20.
+                concatenate i_key1 i_key2 i_key3 i_key4 into lv_string.
+                shift lv_string left deleting leading ' '.
+                lv_key_bal_indx = lv_string.
+
+                "Daten in flache Form umwandeln
+                trans(
+                   exporting
+                      xml          = 'X'
+                      zip                = 'X'
+                      i_any              = i_any
+                   importing
+                      e_result           = lv_data ).
+
+
+                do( free_sy = 'X').
+                export data = lv_data to database bal_indx(z1) client sy-mandt id lv_key_bal_indx.
+                x_raise_check( sy_subrc = 'X' ).
+
+
+              when so10.
+
+*            data lv_object type thead-tdobject.
+*            data lv_name   type thead-tdname.
+*            data lv_id     type thead-tdid.
+*            data lv_langu  type thead-tdspras.
+                data lt_so10_stringtab type string_table.
+                lv_object = i_key1. " 'VBBK'
+                lv_id     = i_key2. " '0002' Type
+                lv_name   = i_key3. " '0030000000' Auftrag
+                lv_langu  = i_key4. " 'E'
+
+                lt_so10_stringtab = i_any.
+
+                lcl_help=>so10_write(
+                    i_key1   = lv_object
+                    i_key2   = lv_id
+                    i_key3   = lv_name
+                    i_key4   = lv_langu
+                    i_any    = lt_so10_stringtab
+                    i_commit = commit
+                    ).
+
+              when others.
+                x_raise('CX_WONG_CALL_OF_METHOD').
+            endcase.
+
+            if commit = 'X'.
+              do( commit_a_wait = 'X' ).
+            endif.
+
+          when cs-s_crud-delete.
+
+            case abap_true.
+
+              when all.
+                "Generisches Lesen von Daten aus DB
+
+                service(
+                     crud        = crud
+                     vari = 'X'
+                     raise_error = 'X'
+                     i_key1 = i_key1
+                     i_key2 = i_key2
+                     i_key3 = i_key3
+                            ).
+
+
+              when vari.
+                "VARI Tabelle für Selektionsvarianten
+                "generische Ablage für unstrukturierte Daten
+
+*            data lv_key type c length 54.
+*            data lv_string type string.
+
+                lv_string = get( trim = 'X' i_any = i_key1 ) &&
+                            get( trim = 'X' i_any = i_key2 ) &&
+                            get( trim = 'X' i_any = i_key3 ).
+                lv_key(54) = lv_string.
+
+                do( free_sy = 'X').
+                delete from database vari(z1) client sy-mandt id lv_key.
+                if sy-subrc = 4.
+                  x_raise( i_head = 'ZCX_DELETE_VARI_DATABASE_ERROR'
+                        i_any = msg( i_any = 'ZCX_NO_ENTRY_WITH_KEY_&1_FOUND' i_v1 = lv_key )-s_bapi ).
+                else.
+                  x_raise_check( sy_subrc = 'X' i_head = 'ZCX_DELETE_VARI_DATABASE_ERROR' ).
+                endif.
+
+            endcase.
+
+
+            """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+            " DB Commit
+
+            if commit = 'X'.
+              do( commit_a_wait = 'X' ).
+            endif.
+
+
+          when others.
+            x_raise('ZCX_WRONG_CALL_OF_METHOD').
+        endcase.
+
+        """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+        " error handling
+
+        data: lx_root type ref to cx_root.
+      catch cx_root into lx_root.
+        lcl_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
+    endtry.
+
+  endmethod.
+
+
+  method trans.
+
+    data:
+      lt_where   type rsds_twhere,
+      ls_where   type line of rsds_twhere,
+      lt_params  type rsds_trange,
+      lv_string  like line of ls_where-where_tab,
+      lv_string2 type string.
+
+    field-symbols: <ls_params>     like line of lt_params,
+                   <lt_any>        type standard table,
+                   <lt_any_result> type standard table,
+                   <ls_any_result> type any,
+                   <ls_any>        type any.
 
 
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -5627,255 +4678,287 @@ endcase.
     " Zippen / Tabellen / Formate usw
     """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-    TRY.
+    try.
 
-        CASE abap_true.
+        case abap_true.
 
-          WHEN copy.
+          when xml_2_itab.
 
-            DATA lr_data TYPE REF TO data.
-            FIELD-SYMBOLS: <lr_data> TYPE STANDARD TABLE.
-            CREATE DATA lr_data LIKE i_any.
-            ASSIGN lr_data->* TO <lr_data>.
+            data lv_xml_input type string.
+
+            lv_xml_input = i_any.
+
+            data buffer      type xstring.
+            data: lt_xml_tab type table of smum_xmltb.
+            data: lt_return  type table of bapiret2.
+
+            call function 'SCMS_STRING_TO_XSTRING'
+              exporting
+                text   = lv_xml_input
+*               MIMETYPE       = ' '
+*               ENCODING       = ENCODING
+              importing
+                buffer = buffer
+              exceptions
+                failed = 1
+                others = 2.
+            if sy-subrc <> 0. sy-subrc = sy-subrc. endif.
+            x_raise_check( function = 'X' ).
+
+            call function 'SMUM_XML_PARSE'
+              exporting
+                xml_input = buffer "iv_xml_string
+              tables
+                xml_table = lt_xml_tab
+                return    = lt_return.
+            x_raise_check( function = 'X' i_check1 = lt_return ).
+
+            e_result = lt_xml_tab.
+
+
+          when copy.
+
+            data lr_data type ref to data.
+            field-symbols: <lr_data> type standard table.
+            create data lr_data like i_any.
+            assign lr_data->* to <lr_data>.
             <lr_data> = i_any.
 
 
-          WHEN value_2_range.
+          when value_2_range.
 
-            DATA lt_range TYPE rsds_selopt_t.
-            APPEND INITIAL LINE TO lt_range ASSIGNING FIELD-SYMBOL(<ls_range>).
+            data lt_range type rsds_selopt_t.
+            append initial line to lt_range assigning field-symbol(<ls_range>).
             <ls_range>-low = i_any.
             <ls_range>-sign = 'I'.
             <ls_range>-option = 'EQ'.
             e_result = lt_range.
 
-          WHEN id.
+          when id.
 
             "Schreibt Input unverÃ¤ndert in Output
             "verhindert aber dass bei inkompatibilitÃ¤t eine unbehandelbare Ausnahme ensteht
-            IF abap_true = check( convertible = 'X' i_any = i_any i_any2 = e_result ).
+            if abap_true = check( convertible = 'X' i_any = i_any i_any2 = e_result ).
               e_result = i_any.
-            ELSE.
-              raise( i_any = get_msg(
-                                    i_any = 'ZCX_INPUT_&1_CONVERT_TO_&2_ERROR'
-                                    iv_v1 =  get( rtti_kind = 'X' i_any = i_any )
-                                    iv_v2 =  get( rtti_kind = 'X' i_any = e_result )
-                                      )
+            else.
+              x_raise( msg( i_any = 'ZCX_INPUT_&1_CONVERT_TO_&2_ERROR'
+                            i_v1 =  get( rtti_kind = 'X' i_any = i_any )
+                            i_v2 =  get( rtti_kind = 'X' i_any = e_result ) )-s_bapi
                      ).
 
-            ENDIF.
+            endif.
 
-          WHEN params_2_struct.
+          when params_2_struct.
 
             lcl_help=>trans_params_2_struc(
-              EXPORTING
+              exporting
                 it_params = i_any
-              IMPORTING
+              importing
                 es_struc  = e_result ).
 
 
-          WHEN print.
-            DATA lt_stringtab TYPE stringtab.
+          when print.
+            data lt_stringtab type string_table.
             lv_string2 = lcl_help=>write( i_any ).
 
-            IF get( rtti_kind = 'X' i_any = e_result ) = cl_abap_typedescr=>kind_table.
+            if get( rtti_kind = 'X' i_any = e_result ) = cl_abap_typedescr=>kind_table.
 
-              SPLIT lv_string2 AT cl_abap_char_utilities=>cr_lf INTO TABLE lt_stringtab.
+              split lv_string2 at cl_abap_char_utilities=>cr_lf into table lt_stringtab.
               e_result = lt_stringtab.
 
-            ELSE.
+            else.
               e_result  = lv_string2.
-            ENDIF.
+            endif.
 
-          WHEN xml_2.
+          when xml_2.
 
-            IF unzip = abap_true.
-              trans( EXPORTING unzip = 'X' i_any = i_any
-                     IMPORTING e_result = i_any ).
+            if unzip = abap_true.
+              trans( exporting unzip = 'X' i_any = i_any
+                     importing e_result = i_any ).
 
-            ENDIF.
+            endif.
 
-            SHIFT i_any LEFT DELETING LEADING ' '.
+            shift i_any left deleting leading ' '.
             lv_string2 = i_any.
 
-            CALL TRANSFORMATION id
-             SOURCE XML lv_string2
-             RESULT test = e_result.
+            call transformation id
+             source xml lv_string2
+             result test = e_result.
 
-            RETURN.
+            return.
 
-          WHEN json.
+          when json.
 
-            DATA(lo_json_writer_t) = cl_sxml_string_writer=>create( type = if_sxml=>co_xt_json ).
+            data(lo_json_writer_t) = cl_sxml_string_writer=>create( type = if_sxml=>co_xt_json ).
 
-            CALL TRANSFORMATION id
-                    SOURCE values = i_any
-                    RESULT XML lo_json_writer_t.
+            call transformation id
+                    source values = i_any
+                    result xml lo_json_writer_t.
 
             cl_abap_conv_in_ce=>create( )->convert(
-              EXPORTING
+              exporting
                 input = lo_json_writer_t->get_output( )
-              IMPORTING
+              importing
                 data = e_result ).
 
-            IF zip = abap_true.
-              trans( EXPORTING zip = 'X' i_any = e_result
-                     IMPORTING e_result = e_result ).
-            ENDIF.
+            if zip = abap_true.
+              trans( exporting zip = 'X' i_any = e_result
+                     importing e_result = e_result ).
+            endif.
 
 
-          WHEN json_2.
+          when json_2.
 
-            IF unzip = abap_true.
-              trans( EXPORTING unzip = 'X' i_any = i_any
-                     IMPORTING e_result = i_any ).
-            ENDIF.
+            if unzip = abap_true.
+              trans( exporting unzip = 'X' i_any = i_any
+                     importing e_result = i_any ).
+            endif.
 
-            CALL TRANSFORMATION id SOURCE XML i_any
-                         RESULT values = e_result.
+            call transformation id source xml i_any
+                         result values = e_result.
 
-          WHEN tab_2_tab.
-            IF cl_abap_datadescr=>kind_table <> get( rtti_kind = 'X' i_any = i_any )
-            OR cl_abap_datadescr=>kind_table <> get( rtti_kind = 'X' i_any = e_result ).
-              raise( 'ZCX_WRONG_INPUT_TYPE').
-            ENDIF.
+          when tab_2_tab.
+            if cl_abap_datadescr=>kind_table <> get( rtti_kind = 'X' i_any = i_any )
+            or cl_abap_datadescr=>kind_table <> get( rtti_kind = 'X' i_any = e_result ).
+              x_raise( 'ZCX_WRONG_INPUT_TYPE').
+            endif.
 
-            ASSIGN i_any   TO <lt_any>.
-            ASSIGN e_result TO <lt_any_result>.
+            assign i_any   to <lt_any>.
+            assign e_result to <lt_any_result>.
 
-            FREE <lt_any_result>.
-            LOOP AT <lt_any> ASSIGNING <ls_any>.
-              APPEND INITIAL LINE TO <lt_any_result> ASSIGNING <ls_any_result>.
-              conv( EXPORTING i_any = <ls_any> IMPORTING r_result =  <ls_any_result> ).
-            ENDLOOP.
+            clear <lt_any_result>.
+            loop at <lt_any> assigning <ls_any>.
+              append initial line to <lt_any_result> assigning <ls_any_result>.
+              conv( exporting i_any = <ls_any> importing r_result =  <ls_any_result> ).
+            endloop.
 
-          WHEN string_2_stringtab.
+          when string_2_stringtab.
 
-            IF split_word = abap_true.
+            if split_word = abap_true.
 
 
-              DATA:
-                lv_line   TYPE c LENGTH 1000,
-                lv_length TYPE i.
+              data:
+                lv_line   type c length 1000,
+                lv_length type i.
 *                lt_stringtab TYPE stringtab.
 
               lv_line = i_any.
               lv_length = i_any2.
               ##FM_SUBRC_OK
-              CALL FUNCTION 'RKD_WORD_WRAP'
-                EXPORTING
+              call function 'RKD_WORD_WRAP'
+                exporting
                   textline            = lv_line   " Source text line
                   outputlen           = lv_length   " Maximum output line width
-                TABLES
+                tables
                   out_lines           = lt_stringtab  " All output lines as table
-                EXCEPTIONS
+                exceptions
                   outputlen_too_large = 1
                   error_message       = 2
-                  OTHERS              = 3.
-              raise_check( function = 'X' ).
+                  others              = 3.
+              x_raise_check( function = 'X' ).
 
               e_result = lt_stringtab.
 
-              RETURN.
-            ELSE.
-              DATA lv_text TYPE string.
+              return.
+            else.
+              data lv_text type string.
               lv_length = i_any2.
               lv_text = i_any.
-              DO.
-                APPEND INITIAL LINE TO lt_stringtab ASSIGNING FIELD-SYMBOL(<lv_string>).
-                TRY.
+              do.
+                append initial line to lt_stringtab assigning field-symbol(<lv_string>).
+                try.
                     <lv_string> = lv_text(lv_length).
-                  CATCH cx_root.
-                    EXIT.
-                ENDTRY.
-              ENDDO.
+                  catch cx_root.
+                    exit.
+                endtry.
+              enddo.
 
 
-            ENDIF.
+            endif.
 
 
-            ASSIGN i_any   TO <lt_any>.
-            ASSIGN e_result TO <lt_any_result>.
+            assign i_any   to <lt_any>.
+            assign e_result to <lt_any_result>.
 
-            LOOP AT <lt_any> ASSIGNING <ls_any>.
-              APPEND INITIAL LINE TO <lt_any_result> ASSIGNING <ls_any_result>.
+            loop at <lt_any> assigning <ls_any>.
+              append initial line to <lt_any_result> assigning <ls_any_result>.
               <ls_any_result> = <ls_any>.
-            ENDLOOP.
+            endloop.
 
 
-          WHEN  xml.
+          when  xml.
 *            DATA lv_string2 TYPE string.
-            FREE lv_string2.
+            clear lv_string2.
 
-            CALL TRANSFORMATION id
-               OPTIONS data_refs = 'heap-or-create'
-               SOURCE test =  i_any
-               RESULT XML lv_string2.
+            call transformation id
+               options data_refs = 'heap-or-create'
+               source test =  i_any
+               result xml lv_string2.
 
             e_result = lv_string2.
 
-            IF zip = abap_true.
-              trans( EXPORTING zip = 'X' i_any = e_result
-                     IMPORTING e_result = e_result ).
+            if zip = abap_true.
+              trans( exporting zip = 'X' i_any = e_result
+                     importing e_result = e_result ).
 
-            ENDIF.
+            endif.
 
-            RETURN.
+            return.
 
-          WHEN zip.
+          when zip.
 
-            DATA:
+            data:
 *              lv_string2 TYPE string,#
-              lv_xstring TYPE xstring.
+              lv_xstring type xstring.
 
-            IF check( convertible = 'X' i_any = lv_string2 i_any2 = i_any ) = abap_true.
+            if check( convertible = 'X' i_any = lv_string2 i_any2 = i_any ) = abap_true.
               lv_string2 = i_any.
-            ELSE.
-              raise('WRONG_INPUT_TYPE').
-            ENDIF.
+            else.
+              x_raise('WRONG_INPUT_TYPE').
+            endif.
 
             cl_abap_gzip=>compress_text(
-            EXPORTING text_in  = lv_string2
-            IMPORTING gzip_out = lv_xstring ).
+            exporting text_in  = lv_string2
+            importing gzip_out = lv_xstring ).
 
             e_result = lv_xstring.
-            RETURN.
+            return.
 
-          WHEN unzip.
+          when unzip.
 
             lv_xstring = i_any.
 
             cl_abap_gzip=>decompress_text(
-               EXPORTING gzip_in  = lv_xstring   " Eingabe der gezippten Daten
-               IMPORTING text_out = lv_string2 ). " Dekomprimierte Ausgabe
+               exporting gzip_in  = lv_xstring   " Eingabe der gezippten Daten
+               importing text_out = lv_string2 ). " Dekomprimierte Ausgabe
 
             e_result = lv_string2.
-            RETURN.
+            return.
 
-          WHEN rangetab_2_where.
+          when rangetab_2_where.
 
-            APPEND INITIAL LINE TO lt_params ASSIGNING <ls_params>.
+            append initial line to lt_params assigning <ls_params>.
 
             <ls_params>-tablename = 'SPFLI'.
             <ls_params>-frange_t = i_any.
 
-            CALL FUNCTION 'FREE_SELECTIONS_RANGE_2_WHERE'
-              EXPORTING
+            call function 'FREE_SELECTIONS_RANGE_2_WHERE'
+              exporting
                 field_ranges  = lt_params   " Selections in the form RSDS_TRANGE
-              IMPORTING
+              importing
                 where_clauses = lt_where.   " Selections in the form RSDS_TWHERE
 
-            READ TABLE lt_where INDEX 1
-                INTO ls_where.
+            read table lt_where index 1
+                into ls_where.
 
-            LOOP AT ls_where-where_tab INTO lv_string.
+            loop at ls_where-where_tab into lv_string.
 
-              CONCATENATE
+              concatenate
                   e_result
                   lv_string
-                  INTO e_result.
+                  into e_result.
 
-            ENDLOOP.
+            endloop.
 
 
 *          WHEN any_2_chartab.
@@ -5888,54 +4971,693 @@ endcase.
 *              <ls_any_result> = <ls_any>.
 *            ENDLOOP.
 
-          WHEN OTHERS. "Selbst transformation finden
+          when others. "Selbst transformation finden
 
-            rtti( EXPORTING i_any   = i_any
-                  IMPORTING ev_kind = DATA(lv_kind_in) ).
+            rtti( exporting i_any   = i_any
+                  importing ev_kind = data(lv_kind_in) ).
 
-            rtti( EXPORTING i_any    = e_result
-                  IMPORTING ev_kind = DATA(lv_kind_out) ).
+            rtti( exporting i_any    = e_result
+                  importing ev_kind = data(lv_kind_out) ).
 
-            IF lv_kind_in = lv_kind_out AND lv_kind_in = cl_abap_typedescr=>kind_table.
-              trans( EXPORTING tab_2_tab = 'X' i_any = i_any
-                     IMPORTING e_result = e_result ).
-              RETURN.
-            ENDIF.
+            if lv_kind_in = lv_kind_out and lv_kind_in = cl_abap_typedescr=>kind_table.
+              trans( exporting tab_2_tab = 'X' i_any = i_any
+                     importing e_result = e_result ).
+              return.
+            endif.
 
 
-            IF abap_true = check( convertible = 'X' i_any = lt_range i_any2 = e_result )
-                AND abap_true = check( rtti_type_kind_cseq = 'X' i_any = i_any ).
+            if abap_true = check( convertible = 'X' i_any = lt_range i_any2 = e_result )
+                and abap_true = check( rtti_type_kind_cseq = 'X' i_any = i_any ).
 
-              trans( EXPORTING value_2_range = 'X' i_any = i_any
-                     IMPORTING e_result = e_result ).
+              trans( exporting value_2_range = 'X' i_any = i_any
+                     importing e_result = e_result ).
 
-              RETURN.
-            ENDIF.
+              return.
+            endif.
 
 *            data(lv_type_in)
 
-            IF 'SOLIX_TAB' = get( rtti_type = 'X' i_any = i_any )
-               AND 'XSTRING' = get( rtti_type = 'X' i_any = e_result ).
+            if 'SOLIX_TAB' = get( rtti_type = 'X' i_any = i_any )
+               and 'XSTRING' = get( rtti_type = 'X' i_any = e_result ).
 
               e_result = lcl_help=>convert_binary_2_xstring( i_any ).
 
-              RETURN.
-            ENDIF.
+              return.
+            endif.
 
-            IF 'XSTRING' = get( rtti_type = 'X' i_any = i_any )
-             AND 'SOLIX_TAB' = get( rtti_type = 'X' i_any = e_result ).
+            if 'XSTRING' = get( rtti_type = 'X' i_any = i_any )
+             and 'SOLIX_TAB' = get( rtti_type = 'X' i_any = e_result ).
 
               e_result =  lcl_help=>convert_xstring_2_binary( iv_input = i_any ).
-              RETURN.
-            ENDIF.
+              return.
+            endif.
 
-        ENDCASE.
+        endcase.
 
 
-        DATA lx_root TYPE REF TO cx_root.
-      CATCH cx_root INTO lx_root.
+        data lx_root type ref to cx_root.
+      catch cx_root into lx_root.
         lcl_help=>handle_error( ix_root = lx_root raise_error = raise_error ).
-    ENDTRY.
+    endtry.
 
-  ENDMETHOD.
-ENDCLASS.
+  endmethod.
+
+
+  method x_info.
+
+    data:
+      lx_no    type ref to lcx_no_check,
+      lr_data  type ref to data,
+      lv_value type string,
+      lv_descr type string.
+    data: lx_root type ref to cx_root.
+    field-symbols:
+    <lv_value> type any.
+
+    "Infos aus Exception auslesen
+    "Bsp Nachricht, Logs, Callstack usw
+    try.
+        lx_no ?= ix_root.
+
+        r_result = lx_no->ms_data.
+
+        et_add_t100 = lx_no->ms_data-add_t100.
+        ev_guid     = lx_no->ms_data-guid.
+        et_source   = lx_no->ms_data-t_source_code.
+        ev_code     = lx_no->ms_data-code.
+        es_bapiret  = lx_no->ms_data-s_bapiret.
+        et_callstack = lx_no->ms_data-t_callstack.
+        e_add_serial = lx_no->ms_data-add_serial.
+        ev_val_print = ' '.
+        es_data = lx_no->ms_data.
+
+        if lx_no->ms_data-serial_value is not initial.
+
+          json(
+            exporting
+              json_2      = abap_true
+              i_any      = lx_no->ms_data-serial_value
+            importing
+              e_ref1      = lr_data
+          ).
+
+          if lr_data is bound.
+
+            assign lr_data->* to <lv_value>.
+            trans( exporting print = 'X' i_any = <lv_value> importing e_result = lv_value ).
+            rtti( exporting i_any = <lv_value> importing ev_typedescr = lv_descr ).
+            concatenate ev_val_print  lv_descr ' = '  lv_value '  |  ' into ev_val_print respecting blanks.
+
+          endif.
+
+          clear lr_data.
+          json(
+            exporting
+              json_2      = abap_true
+              i_any      = lx_no->ms_data-serial_value
+            importing
+              e_ref2      = lr_data
+          ).
+
+          if lr_data is bound.
+
+            assign lr_data->* to <lv_value>.
+            trans( exporting print = 'X' i_any = <lv_value> importing e_result = lv_value ).
+            rtti( exporting i_any = <lv_value> importing ev_typedescr = lv_descr ).
+            concatenate ev_val_print  lv_descr ' = '  lv_value '  |  ' into ev_val_print respecting blanks.
+
+          endif.
+
+          clear lr_data.
+          json(
+            exporting
+              json_2      = abap_true
+              i_any      = lx_no->ms_data-serial_value
+            importing
+              e_ref3      = lr_data
+          ).
+
+          if lr_data is bound.
+
+            assign lr_data->* to <lv_value>.
+            trans( exporting print = 'X' i_any = <lv_value> importing e_result = lv_value ).
+            rtti( exporting i_any = <lv_value> importing ev_typedescr = lv_descr ).
+            concatenate ev_val_print  lv_descr ' = '  lv_value '  |  ' into ev_val_print respecting blanks.
+
+          endif.
+
+          clear lr_data.
+          json(
+            exporting
+              json_2      = abap_true
+              i_any      = lx_no->ms_data-serial_value
+            importing
+              e_ref4      = lr_data
+          ).
+
+          if lr_data is bound.
+
+            assign lr_data->* to <lv_value>.
+            trans( exporting print = 'X' i_any = <lv_value> importing e_result = lv_value ).
+            rtti( exporting i_any = <lv_value> importing ev_typedescr = lv_descr ).
+            concatenate ev_val_print  lv_descr ' = '  lv_value '  |  ' into ev_val_print respecting blanks.
+
+          endif.
+
+
+          shift ev_val_print right deleting trailing ' '.
+          shift ev_val_print right deleting trailing '|'.
+          shift ev_val_print left deleting leading ' '.
+
+        endif.
+
+
+*    if es_data is supplied.
+
+*    endif.
+
+
+*        RETURN.
+
+      catch cx_root into lx_root.
+*        lcl_local_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
+    endtry.
+
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " OData Exception
+
+    data lx_odata type ref to /iwbep/cx_mgw_base_exception.
+
+    try.
+
+        lx_odata ?= ix_root.
+
+        msg( exporting i_any  = lx_odata->message_container
+              importing e_any = et_add_t100 ) .
+
+
+      catch cx_root into lx_root.
+*        lcl_local_help=>handle_error(  ix_root = lx_root raise_error = raise_error ).
+    endtry.
+
+  endmethod.
+
+
+  method x_raise.
+
+    " Erzeugen einer Exception
+    " Wenn e_result nicht gefuellt -> Methode wirft Exception
+    " Diverse Inputparameter werden in Exception abgelegt
+
+    data(ls_sy) = sy.
+
+    data lx_prev    type ref to cx_root.
+    if i_prev is not initial.
+      lx_prev = x_raise( i_any =  i_prev iv_depth = iv_depth + 1 ).
+    endif.
+
+    data lx_result  type ref to lcx_no_check.
+    try.
+        lx_result ?= i_any.
+
+      catch cx_root.
+
+        "Spezialfall: Bei Exception -> seinen Vorgaenger nehmen
+        if lx_prev is initial.
+          try.
+              lx_prev ?= i_any.
+              lx_prev = lx_prev->previous.
+            catch cx_root.
+          endtry.
+        endif.
+
+        "ganz neu
+        create object lx_result.
+
+        if i_any is initial.
+          lx_result->ms_data-s_bapiret = msg( '530(SY)')-s_bapi. "Es ist eine Ausnahme aufgetreten
+        else.
+          lx_result->ms_data-s_bapiret = msg( i_any )-s_bapi.
+        endif.
+
+        lx_result->ms_data-s_bapiret-type = 'E'.
+
+        lx_result->ms_data-noid = msg(
+           exporting
+             i_any   = lx_result->ms_data-s_bapiret
+           importing
+             e_any   = lx_result->if_t100_message~t100key
+*            ev_noid = lx_result->ms_data-noid
+         )-noid.
+
+        lx_result->text         = lx_result->ms_data-s_bapiret-message.
+        lx_result->ms_data-s_sy = ls_sy.
+        lx_result->ms_data-code = i_code.
+        lx_result->ms_data-guid = get( guid16 = 'X' ).
+*        IF lx_result->ms_data-s_bapiret-message(3) = 'ZCX' OR i_any(2) = 'CX'.
+*          lx_result->ms_data-code = lx_result->ms_data-s_bapiret-message.
+*        ENDIF.
+
+        info(
+        exporting
+          iv_depth = iv_depth + 1
+        importing
+          ev_timestampl      = lx_result->ms_data-timestampl
+          es_callstack       = lx_result->ms_data-s_callstack
+          et_callstack       = lx_result->ms_data-t_callstack
+          et_source_code     = lx_result->ms_data-t_source_code
+      ).
+
+        "Source Code verkleinern
+        data ls_dummy   like line of lx_result->ms_data-t_source_code.
+        data lv_counter type i.
+        loop at lx_result->ms_data-t_source_code into ls_dummy.
+          add 1 to lv_counter.
+          if lv_counter > lx_result->ms_data-s_callstack-line + 5.
+            delete lx_result->ms_data-t_source_code.
+          endif.
+        endloop.
+        if lx_result->ms_data-s_callstack-line - 35 > 0.
+          do lx_result->ms_data-s_callstack-line - 35 times.
+            delete lx_result->ms_data-t_source_code index 1.
+          enddo.
+        endif.
+
+    endtry.
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    "Previous
+
+    if lx_prev is not initial.
+      lcl_help=>cx_set(
+          ix_no_check = lx_result
+          ix_prev     = lx_prev
+      ).
+    endif.
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    "weitere Infos
+    data lx_help type ref to cx_root.
+    data lt_text_add type bapiret2_tab.
+*    data lx_help_local type ref to
+    lx_help = lx_result.
+    while lx_help is bound.
+      clear lt_text_add.
+      insert lx_help->get_text(  ) into table lx_result->texttab.
+      lt_text_add = x_info( lx_help )-add_t100.
+      if lt_text_add is not initial.
+        loop at lt_text_add into data(ls_bapi).
+          insert conv #( ls_bapi-message ) into table lx_result->texttab.
+        endloop.
+      endif.
+      lx_help = lx_help->previous.
+    endwhile.
+    msg( exporting i_any = lx_result importing e_any = lx_result->texttab ).
+
+    if i_add_t100 is not initial.
+
+*      msg( exporting i_any      = i_add_t100
+*            importing e_any_add = lx_result->ms_data-add_t100 ).
+      insert lines of  msg(  i_add_t100 )-t_bapi
+      into table lx_result->ms_data-add_t100.
+
+    endif.
+    if i_add_write is not initial.
+      trans( exporting print = 'X' i_any = i_add_write
+             importing e_result = lx_result->ms_data-add_write   ).
+    endif.
+    if i_ser_data is not initial.
+      lx_result->ms_data-add_serial = i_ser_data.
+    endif.
+    if i_ser_value is not initial.
+      lx_result->ms_data-serial_value = i_ser_value.
+    endif.
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " Head
+
+    if i_head is not initial.
+      lx_result ?= x_raise( i_any = i_head i_prev = lx_result iv_depth = iv_depth + 1 ).
+    endif.
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " raisen
+
+    if r_result is supplied.
+      r_result = lx_result.
+    elseif resumable = abap_true.
+      raise resumable exception lx_result.
+    else.
+      raise exception lx_result.
+    endif.
+
+  endmethod.
+
+
+  method x_raise_check.
+
+    data:
+      lx_no_check  type ref to lcx_no_check,
+      ls_sy        type sy,
+      lv_tabname   type string,
+      lv_readtable type string,
+      lx_prev      type ref to lcx_no_check,
+      ls_bapi      type bapiret2,
+      lv_is_error  type abap_bool,
+      lt_add_t100  type bapiret2_tab.
+    data: lv_v1 type string, lv_v2 type string, lv_v3 type string.
+
+
+    " Testen ob ein Fehlerfall (je nach Situation) vorliegt
+    " Bsp nach Select, Read Table, Call function usw
+    " Bei Erkennung eines Fehler wird eine Exception vom Typ no_check geraist
+    " Wenn e_result nicht gefuellt -> Methode wirft Exception
+
+    ls_sy = sy.
+    if is_sy is supplied.
+      ls_sy = is_sy.
+    endif.
+    lx_no_check ?= x_raise( iv_depth = 1 ).  "Dummy Exception fuer Codingstelle etc erzeugen
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " PrÃ¼fung und Nachricht erzeugen
+
+    case abap_true.
+
+      when sy_msgty.
+
+        if ls_sy-msgty <> 'E'.
+          return.
+        endif.
+
+        data lv_method type string.
+        data lv_repid type string.
+
+        info(
+          exporting
+            iv_depth     = 1
+          importing
+             ev_method   = lv_method
+             ev_repid    = lv_repid  ).
+
+        "DE CACSCOR 061 SYST: Fehler in Routine &1 &2 &3 &4
+        ls_bapi = msg( i_any = '061(CACSCOR)' i_v1 = lv_repid && '(' && lv_method && ')'
+                            i_v2 = ' | ' i_v3 = 'sy-msgty' i_v4 = `= E` )-s_bapi. "iv_v4 = ls_sy-subrc ).
+
+        if ls_sy-msgid is not initial and ls_sy-msgno is not initial.
+          lx_prev ?= x_raise( i_any = ls_sy iv_depth = 1 i_prev = i_prev ).
+        else.
+          if i_prev is not initial.
+            lx_prev ?= x_raise( i_any = i_prev iv_depth = 1 ).
+          endif.
+        endif.
+
+      when select.
+
+        if ls_sy-subrc = 0.
+          return.
+        endif.
+
+        lv_tabname = lcl_help=>source_code_get_selectname(
+             it_source = lx_no_check->ms_data-t_source_code ).
+
+        "Select auf Tabelle xy fehlgeschlagen CCSEQ' iv_no = 061
+        ls_bapi =  msg(
+              i_id         = 'CCSEQ'
+              i_no         = '061'
+              i_v1         = lv_tabname )-s_bapi.
+
+        if i_prev is not initial.
+          lx_prev ?= x_raise( i_any = i_prev iv_depth = 1 ).
+        endif.
+
+      when function.
+
+        "Fehlerkontrolle nach Aufruf Funktionsbaustein
+        "Sy Werte korrekt? Nachrichten nicht fehlerhaft? Sonstige Flags?
+
+        data lt_t100_tmp type bapiret2_tab.
+
+        insert lines of  msg( i_any = i_check1 )-t_bapi into table lt_t100_tmp.
+        insert lines of  msg( i_any = i_check2 )-t_bapi into table lt_t100_tmp.
+        insert lines of  msg( i_any = i_check3 )-t_bapi into table lt_t100_tmp.
+*        lt_t100_tmp = msg( i_any = i_check2 )-t_bapi.
+*        lt_t100_tmp = msg( i_any = i_check3 )-t_bapi.
+
+        "Ist irgendwo ein Fehler uebergeben worden?
+        if  abap_false = check( t100_error = 'X' i_any = lt_t100_tmp  ).
+
+          do.
+            if ls_sy-subrc <> 0.
+              lt_t100_tmp = msg( i_any = is_sy i_type = 'E'  )-t_bapi.
+              if lt_t100_tmp is initial.
+                lt_t100_tmp = msg( i_any = 'ZCX_SY_SUBRC_NOT_EQUALS_NULL' i_type = 'E' )-t_bapi.
+              endif.
+              exit.
+            endif.
+
+            if i_flag = abap_true.
+              lt_t100_tmp = msg( i_any = 'ZCX_ERROR_FLAG_IS_SET' i_type = 'E' )-t_bapi.
+              exit.
+            endif.
+            if iv_subrc <> 0.
+              lt_t100_tmp = msg( i_any = 'ZCX_SUBRC_IS_NOT_NULL' i_type = 'E' )-t_bapi.
+              exit.
+            endif.
+
+            if sy_msgty = abap_true.
+              if abap_true = check( t100_error = 'X' i_any = ls_sy ).
+                lt_t100_tmp = msg( i_any = ls_sy i_type = 'E')-t_bapi.
+                exit.
+              endif.
+            endif.
+
+            exit.
+          enddo.
+
+        endif.
+
+        "Wenn keine Fehlersituation -> Abbruch
+        if abap_false = check( t100_error = 'X' i_any =  lt_t100_tmp  ).
+          return.
+        endif.
+
+        "Nachrichten aufbereiten
+        delete adjacent duplicates from lt_t100_tmp comparing message.
+        lt_add_t100 = lt_t100_tmp.
+
+
+        if i_prev is not initial.
+          lx_prev ?= x_raise( i_any = i_prev iv_depth = 1 ).
+        endif.
+
+        info(
+          exporting
+            iv_depth           = 1
+          importing
+            et_source_code     = data(lt_source_code)
+            es_callstack       = data(ls_callstack)
+        ).
+
+
+        while lines( lt_source_code ) > ls_callstack-line.
+          delete lt_source_code index lines( lt_source_code ).
+        endwhile.
+
+        lcl_help=>source_code_get_fubaname( exporting
+                      it_source = lt_source_code
+                        importing
+                        e_v1 = lv_v1
+                        e_v2 = lv_v2
+                        e_v3 = lv_v3 ).
+
+        "DE 56  704 Fehler beim Aufruf des Funktionsbausteines &
+        ls_bapi = msg(
+              i_id           = '56'
+              i_no           = '704'
+              i_v1           = lv_v1
+              i_v2           = lv_v2
+              i_v3           = lv_v3 )-s_bapi.
+
+
+
+      when read_table.
+
+        if ls_sy-subrc = 0.
+          return.
+        endif.
+
+        lv_readtable = lcl_help=>source_code_get_readtable(
+               it_source = lx_no_check->ms_data-t_source_code ).
+
+        ""DE  DS  353 Fehler beim Zugriff auf die interne Tabelle & (&)
+        ls_bapi = msg( i_id  = 'DS' i_no = '353' i_v1 = lv_readtable )-s_bapi.
+
+        if i_prev is not initial.
+          lx_prev ?= x_raise( i_any = i_prev iv_depth = 1 ).
+        endif.
+
+
+      when not_initial.
+
+        if i_check1 is not initial.
+          return.
+        endif.
+
+
+        "DE EI  251 Der Wert ist initial
+        ls_bapi = msg( 'ZCX_INPUT_INITIAL' )-s_bapi.
+        "iv_v4 = ls_sy-subrc ).
+
+*        DATA lv_descr TYPE string.
+
+*        rtti( EXPORTING i_any = i_check1 iv_langu = iv_langu
+*              IMPORTING ev_typedescr = lv_descr ).
+
+*        IF lv_descr IS INITIAL.
+*          ls_bapi = get_msg( i_any = 'ZCX_VALUE_IS_INITIAL_ERROR' iv_v1 = lv_descr ).
+*        ELSE.
+*          ls_bapi = get_msg( i_any = 'ZCX_VALUE_&1_INITIAL_ERROR' iv_v1 = lv_descr ).
+*        ENDIF.
+
+        if i_prev is not initial.
+          lx_prev ?= x_raise( i_any = i_prev iv_depth = 1 ).
+        endif.
+
+
+      when for_all_entries.
+
+        "Schauen ob Tabelle gefÃ¼llt ist
+        if i_check1 is not initial.
+          return.
+        endif.
+
+        lv_readtable = lcl_help=>source_code_get_not_initial( ).
+        lx_prev ?= x_raise(  i_any = 'ZCX_WRONG_SELECT_WITH_FOR_ALL_ENTRIES' i_prev = i_prev ).
+
+        "Select auf Tabelle xy fehlgeschlagen CCSEQ' iv_no = 061
+        ls_bapi =  msg( i_id = 'CCSEQ' i_no = '061' i_v1 = lv_readtable )-s_bapi.
+
+
+      when method.
+
+        if ls_sy-subrc = 0.
+          return.
+        endif.
+
+        ls_bapi = msg('ZCX_CALL_METHOD_ERROR')-s_bapi.
+        if i_prev is not initial.
+          lx_prev ?= x_raise( i_any = i_prev iv_depth = 1 ).
+        endif.
+
+
+      when sy_subrc.
+
+        if ls_sy-subrc = 0.
+          return.
+        endif.
+
+        info(
+          exporting
+            iv_depth     = 1
+          importing
+             ev_method   = lv_method
+             ev_repid    = lv_repid  ).
+
+        data(lv_name) = cl_oo_classname_service=>get_clsname_by_include( incname = conv #( lv_repid )  ).
+
+        "DE CACSCOR 061 SYST: Fehler in Routine &1 &2 &3 &4
+        ls_bapi = msg( i_any = '061(CACSCOR)' i_v1 = lv_name && '(' && lv_method && ')'
+                            i_v2 = ' | ' i_v3 = 'sy-subrc' i_v4 = `<> 0` )-s_bapi. "iv_v4 = ls_sy-subrc ).
+
+        if ls_sy-msgid is not initial and ls_sy-msgno is not initial.
+          lx_prev ?= x_raise( i_any = ls_sy iv_depth = 1 i_prev = i_prev ).
+        else.
+          if i_prev is not initial.
+            lx_prev ?= x_raise( i_any = i_prev iv_depth = 1 ).
+          endif.
+        endif.
+
+
+      when others.
+
+        if i_check1 is not initial.
+          lt_add_t100  =  msg( i_check1  )-t_bapi.
+        endif.
+
+        if i_check2 is not initial.
+          lt_add_t100  =  msg( i_check2 )-t_bapi.
+        endif.
+
+        if i_check3 is not initial.
+          lt_add_t100  =  msg( i_check3 )-t_bapi.
+        endif.
+
+        if is_sy is supplied.
+          lt_add_t100  =  msg( is_sy )-t_bapi.
+          if is_sy-subrc <> 0.
+            lv_is_error = abap_true.
+          endif.
+        endif.
+
+        if lv_is_error = abap_false.
+          lv_is_error = check( t100_error = 'X' i_any = lt_add_t100  ).
+        endif.
+
+        if lv_is_error = abap_false.
+          return.
+        endif.
+
+        if lines( lt_add_t100  ) >= 1.
+          ls_bapi = msg( lt_add_t100[ 1 ] )-s_bapi.
+          delete lt_add_t100 index 1.
+        else.
+          "ein unerwarteter Fehler ist aufgetreten
+          ls_bapi = msg(  i_id = '>3' i_no = '279' )-s_bapi.
+        endif.
+        if i_prev is not initial.
+          lx_prev ?= x_raise( i_any = i_prev iv_depth = 1 ).
+        endif.
+
+
+    endcase.
+
+
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    " Exception erzeugen
+
+    data lv_ser_value type string.
+    if i_val1 is supplied.
+      lv_ser_value = get(  json_deep = 'X' i_any = i_val1 i_any2 = i_val2 i_any3 = i_val3 i_any4 = i_val4 ).
+    else.
+      lv_ser_value = i_ser_value.
+    endif.
+
+    lx_no_check ?=  x_raise(
+         i_any         = ls_bapi
+         i_head        = i_head
+         i_prev        = i_prev
+         iv_depth      = 1
+         i_code        = i_code
+         i_add_t100    = lt_add_t100
+         i_ser_value   = lv_ser_value
+         i_ser_data    = i_ser_data
+         i_add_write   = i_add_write  ).
+
+    if r_result is supplied.
+      r_result = lx_no_check.
+    elseif resumable = abap_true.
+      raise resumable exception lx_no_check.
+    else.
+      raise exception lx_no_check.
+    endif.
+
+  endmethod.
+endclass.
