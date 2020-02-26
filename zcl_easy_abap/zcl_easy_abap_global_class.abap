@@ -1,6 +1,8 @@
-"! Utility Functions
+"! Easy abap
 "! Helps with messages, exceptions, conversions, gui popups ...
 "! v 0.61 - 01.02.2020
+"! https://github.com/lars-sawyer/easy_abap
+
 class zcl_easy_abap definition
   public
   create public .
