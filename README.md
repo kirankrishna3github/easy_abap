@@ -8,7 +8,7 @@ Latest build: [zcl_easy_abap](https://github.com/lars-sawyer/easy_abap/tree/mast
 
 ## Design Goals
 
-* Easy installation: works on every abap system, just copy one class and change two lines of code with the name of the class
+* Easy installation: works on every abap system, just copy&paste one class and change two lines of code with the name of the class
 * Easy to use: no requirements, just create an instance and start calling its methods
 * User-friendly: every method tries to accept data as typeless as possible, don't waste time with conversions any more, no side effects
 
